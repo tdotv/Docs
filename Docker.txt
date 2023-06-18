@@ -1,0 +1,80 @@
+								docker-file
+{
+FROM python:3.6
+
+RUN mkdir -p /usr/src/app/				// Run - Нужно выполнить какуж-то определенную команду - создать папку mkdir
+
+WORKDIR /usr/src/app/					// Переход в заданный каталог
+
+COPY . /usr/src/app/					// Откуда . -> Куда /usr/...
+
+CMD ["python", "app.py"]				// Что надо докеру сделать - выполнить команду python app.py - оболочка shell
+
+//ENTRYPOINT ["python", "app.py"]			// Без оболочки shell
+}
+
+
+								web-docker-file
+{
+FROM python:3.6
+
+RUN mkdir -p /usr/src/app/
+
+WORKDIR /usr/src/app/	
+
+COPY . /usr/src/app/
+
+RUN pip install  --no-cache-dir -r requirements.txt	// Супер крутая темка
+
+EXPOSE 8080						// Декларация проброски порта 8080
+
+CMD ["python", "app.py"]
+}
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+docker build -t hello-world .						Создать свой докер образ (-t - tag) (путь - . текущая директория)
+
+docker run hello-world							Запустить образ с именем hello-world -> Он отработает и остновился, 
+									т.е. его не будет в ps
+
+docker ps								Просмотр РАБОЧИХ контейнеров
+docker ps -a								Просмотреть ВСЕ контейнеры
+
+docker run --name hello hello-world					Запускаем контейнер с образом hello-world и даем ему имя hello
+
+docker rm ...								Удаление контейнера -> ... = или по имени или по container ID
+
+docker ps -a -q								Вывод только ID контейнеров
+
+docker rm $(docker ps -qa)						Удаление всех контейнеров, которые у нас были
+
+docker run --name hello -d hello-world					Контейнер запустится и будет работать в фоне
+
+docker stop hello							Остановить 
+
+docker run --name hello -d --rm hello-world				Когда контейнер отработает или остановится -> он удалится
+
+docker run --rm --name web -p 8080:8080 -e TZ=Europe/Moskow web-hello	Порты - порт нашей машина:порт внутри нашего контейнера
+
+docker volume ls							Просмотр "папок с базой данных"
+
+docker volume create web						Создать волюм
+
+docker run --rm --name web -p 8080:8080 -v web:/usr/src/app/resources web-hello		Актуально для баз данных
+
+docker images								Просмотр образов
+
+docker rmi ...								Удаление образа по имени или его ID
+
+docker rmi $(docker images -q)						Удаление none-образов
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+							docker-compose
+...
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
