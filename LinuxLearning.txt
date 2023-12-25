@@ -1,0 +1,127 @@
+Linux is a multitasking OS from UNIX
+------------------------------------
+Kernel: glue between hardware and applications (hardware - kernel - apps) : THE CORE
+Distribution: collection of software making up a Linux-based OS : Ubuntu
+Boot loader: Program that boots the operating system (init - Linux Kernel - Boot loader) : GRUB
+Service: Program that runs as a background process : httpd - web server, named - Name Server, ...
+Fylesystem: Method for storing and organizing files : ext4, FAT, XFS
+
+X Window System: Graphical subsystem on nearly all Linux systems
+	{ Desktop(GNOME)					{ CLI / Shell
+GUI	{ Window Manager			Console		{ Kernel
+	{ X Window System					{ Hardware
+	
+Desktop Environment (GNOME): Graphical user interface on top of the OS
+Command line: interface | AND | Shell: interpreter command line
+----------------------------------------------------------------------
+				Windows			Linux
+Partition			Disk1			/dev/sda1
+Filesystem Type			NTFS/VFAT		EXT3/EXT4/XFS
+Mounting Parameters		DriveLetter		MountPoint
+Base Folder			C:\			/
+----------------------------------------------------------------------
+Power ON -> BIOS (power on self-test) -> 
+Master Boot Record (first sector of the Hard Disk) -> 
+Kernel (from compressed the chosen OS to decompressed) -> 
+Initial RAM disk - initramfs (searching user devices and drivers for them) -> 
+Boot loader (Kernel + RAM-based filesystem working with the memory) -> 
+/sbin/init (parent process) : starts other process to get system running : for all non-Kernel processes !!! transforms nowadays in /lib/systemd/systemd ->
+Command Shell using getty ->
+X Windows System (GUI) : X Clients : Session manager + Window manager + utilities = seamless desktop
+----------------------------------------------------------------------
+The default display manager is gdm; gdm represents the user woth login screen
+Linux uses UTC
+
+vt7 (virtual terminal) uses for graphical display Ubuntu |
+vt1 in Rel and Opensuse | 
+to change vt ctrl-alt-f2(f3,f4,f5)
+----------------------------------------------------------------------
+Advanced package tool -> dpkg-installer (package manager) -> Debian family Linux
+----------------------------------------------------------------------
+					Command Line Operations
+Command -options arguments
+ls	-a	/home/oleg
+
+sudo - super user do
+
+shutdown [options] [time] [message]
+shutdown -h : power off system		} sudo
+shutdown -r : reboot system		} sudo
+
+which diff : where the diff program resides on the file system : /usr/bin/firefox
+whereis diff : search packages in a broader range of system : /usr/lib64/firefox + /usr/bin/firefox
+
+pwd 	: displays the present working directory
+cd  	: change to your home directory
+cd ..	: change to parent directory (..)
+cd -	: change to previous directory (- (minus))
+
+cd / 		: changes ur current directory to the root (/) directory (or path you supply)
+ls		: list of contents of the present working directory
+ls -a		: list all files, including hidden files and directories
+ls -l		: displays  detailed information about files and directories
+ls -lR dir*	: displays all files in directories
+tree		: display a tree view of the filesystem
+
+*hard links*
+$ touch file1	: create file		
+$ ln file1 file2		-rw-rw-r-- 2 student student 0 Jan  6 09:18 file1
+$ ls -li file?			-rw-rw-r-- 2 student student 0 Jan  6 09:18 file2
+
+*soft links*
+$ ln -s file1 file3		-rw-rw-r-- 2 student student 0 Jan  6 09:18 file1
+$ ls -li file?			-rw-rw-r-- 2 student student 0 Jan  6 09:18 file2
+				lrwxrwxrwx 1 student student 5 Jan  6 09:22 file3 -> file1
+				
+ls -l file1 file3
+OR				-rw-rw-r-- 1 student student 0 Jan  6 09:18 file1
+ls -l *file*			-rw-rw-r-- 1 student student 0 Jan  6 09:18 file2
+			
+
+///// dirs -l -v ///// : view directory stack
+mkdir [options] [directories] 	: allows to create directories
+rmdir [options] [directories]	: allows to remove directories
+pushd [directory] : appends a directory to the top of stack, making the new top the present direc
+popd  [options] [directory] : remove directories from the stack
+
+cat diff  : get entire file			|| Better to use: grep [options] pattern [name.txt]
+head diff : get 10 top lines of file		|| grep -i "Kernel" LinuxLearning.txt
+tail diff : get 10 bottom lines of file		||
+
+locate file1
+
+mv	: rename a file or a directory
+rm	: remove a file
+rm -f	: forcefully remove a file
+rm -i	: interactively remove a file
+
+rmdir	: remove an empty directory
+rm -rf	: forcefully remove a directory recursively
+
+top	: table of processes			|| 'D' = uninterruptible sleep; 'S' = sleep : w8ing for smth
+						|| 'R' = run 				    : ready to run
+						|| 'T' = traced or stopped 		    : ctrl + z
+						|| 'Z' = zombie				    : process is dead
+
+du [options] [directory/file]	: du -h LinuxLearning.txt	: estimating file and directory space usage
+du -sh a*log*			: searching files starting with 'a' and 'log' in centre
+
+df [options] [file]		: df -h				: filesystem used and avail size
+
+mount -t type device dir	: to mount filesystem found on a device to big stree structure rooted ad '/'
+----------------------------------------------------------------------
+						SQL Server
+
+sqlcmd -No -S 127.0.0.1 -U sa		: connect without certification
+systemctl status mssql-server		: check status of sql server
+sudo systemctl stop mssql-server	: stop sql server
+----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
