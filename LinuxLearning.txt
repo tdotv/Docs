@@ -102,6 +102,10 @@ top	: table of processes			|| 'D' = uninterruptible sleep; 'S' = sleep : w8ing f
 						|| 'R' = run 				    : ready to run
 						|| 'T' = traced or stopped 		    : ctrl + z
 						|| 'Z' = zombie				    : process is dead
+						
+ps	: user process show;			|| ps -aux | grep oleg	: show all processes with name oleg
+
+openssh-server	: connection using ssh	
 
 du [options] [directory/file]	: du -h LinuxLearning.txt	: estimating file and directory space usage
 du -sh a*log*			: searching files starting with 'a' and 'log' in centre
@@ -109,6 +113,23 @@ du -sh a*log*			: searching files starting with 'a' and 'log' in centre
 df [options] [file]		: df -h				: filesystem used and avail size
 
 mount -t type device dir	: to mount filesystem found on a device to big stree structure rooted ad '/'
+
+----------------------------------------------------------------------
+The Major difference is FIND is for searching files and directories using filters while GREP is for searching a pattern inside a file or searching process(es)
+
+grep myText theFile.txt				: will print out each line contain the word myText
+
+grep oleg /etc/* > good.txt 2> errors.txt	: > - read, >> - write, grep - search
+grep oleg /etc/* &> results.txt
+
+sort -n numbers.txt > numbers_sorted.txt	: creates new file with sorted numbers
+sort -n numbers.txt >> numbers_sorted.txt	: adds in the end of file sorted numbers
+
+sort -n numbers.txt > numbers.txt		: will create new file numbers.txt with no data!!!
+
+grep -E [A-Za-z].txt mydatafile.doc		: using reg expr should get -E : search using regular expressions
+
+bzip2 after tar for compressing files		: bzip2 compress 1 file; tar archive files
 ----------------------------------------------------------------------
 						SQL Server
 
