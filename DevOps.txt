@@ -19,4 +19,15 @@ SaaS - Software as a Service
 
 ==============================================================================
 
+Ip					|	pipeline
+Mask					|	{
+Gateway					|	  steps
+-------					|	  {
+DNS					|	    build = script: -msbuild; -artifact;
+					|	  }
+					|	  {
+					|	    deploy = CI/CD Jenkins
+					|	  }
+==============================================================================
+
 
