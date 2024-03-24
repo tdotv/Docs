@@ -30,4 +30,105 @@ DNS					|	    build = script: -msbuild; -artifact;
 					|	  }
 ==============================================================================
 
+IPv4		: 192.168.100.10	| 192.168.100 - Subnet ID, определяется по Subnet Mask
+Subnet Mask	: 255.255.255.0		| .10 	      - Host ID (255 и 0 не используется)
+
+CIDR Notation	- сокращенная запись IP и SubnetMask
+IPv4		: 192.168.100.10/24	| 24/8	      - 255.255.255.0 | может быть и 25, 26
+
+==============================================================================
+
+apt install apache2
+
+HAProxy + Хорошо использовать с KeepAlived
+
+HAProxy
+Вначале пропускаем текст по умолчанию
+##############################################################################
+
+listen stats
+	bind *:80
+	mode http
+	stats enable
+	stats uri /haproxy_stats
+	stats realm HAProxy\ Statistics
+	stats auth admin:pass123
+	stats admin if TRUE
+
+frontend my_http_front
+	bind *:80				| Стоит после установки виртуального IP адреса
+	default_backend my_http_back		| указывать вместо звездочки этот самый адрес
+	
+frontend my_secret_front
+	bind *:8080
+	default_backend my_secret_back
+	
+backend my_http_back
+	balance roundrobin
+	server myweb1 xxx.xxx.xxx:80 weight 90
+	server wyweb2 xxx.xxx.xxx:80 weight 10
+	
+backend my_secret_back
+	server mysecretweb xxx.xxx.xxx:80
+
+##############################################################################
+
+KeepAlived			| К примеру у нас несколько HAProxy, которые слушают разные порты
+cd /etc/keepalived/		| 80, 81. Чтобы пользователь при падении сервера подключался к
+touch keepalived.conf		| одному и тому же прокси (85) мы используем KeepAlived
+
+nano keepalived.conf
+
+global_defs {
+  router_id lb01		| В глобальных настройках указываем router: loadbalancer01
+}
+
+vrrp_script check_haproxy {
+  script "/usr/bin/systemctl is-active --quiet haproxy"	| Скрипт работает ли HAProxy
+  interval 2
+  weight 2
+ }
+
+vrrp_instance my-web {		| Настройка интерфейса
+  state MASTER			| Соответственно на втором loadbalancer02 будет BACKUP
+  interface ens18		| Указание интерфейса "ip a"
+  virtual_router_id 123		| Группа (неважно)
+  priority 100			| Чем выше приоритет, тем важнее работа KeepAlived (получение запроса)
+  advert_int 1			|
+  authentication {		| В BACKUP priority 99, router_id lb02
+    auth_type PASS		|
+    auth_pass myPass12
+  }
+  virtual_ipaddress {
+    xxx.xxx.xxx.xxx
+  }
+  track_script {
+    check_haproxy
+  }
+}
+
+useradd -s /usr/bin/nologin keepalived_script	| Создание юзера для запуска скрипта
+
+nano /etc/sysctl.conf	->	net ipv4 ip_nolocal_bind=1
+sysctl -p
+// Разрешаем добавлять в программу те адреса, которых нет в сетевых интерфейсах
+
+Вот это все делается на lb01, а затем нужно скопировать конфиг в lb02 + настройка sysctl + user
+
+==============================================================================
+
+Apache Jmeter - Приложение для нагрузочного тестирования сайтов
+
+jmeter -n -t [jmx file] -l [results file] -e -o [Path to web report folder]
+
+ИСПОЛЬЗОВАТЬ GUI ДЛЯ ЗАПУСКА ТЕСТОВ НЕЛЬЗЯ!!!
+Add - Threads (Users) - Thread Group - кол-во юзеров (number of threads) и как быстро будет тест (ramp-up)
+Users.Add - Sampler - Debug Sampler
+
+HTTP Request.Add - Listener - View Result Tree && View Result In Table
+HTTP Request.Add - Assertions - Response Assertion (проверка овтета)
+
+==============================================================================
+
+
 
