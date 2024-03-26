@@ -27,6 +27,9 @@ git mv app.py application.py		// (move) Новое имя для файла
 git mv app.py /resources/application.py	// Перенос в другой каталог + переименование
 git rm					// (remove)
 
+git reset HEAD -- file21.c		// Приведет индекс в соответствии с поледней версией
+git checkout -- file21.c		// Приведет рабочую директорию в соответствие с версией
+
 .gitignore
 __pycache__/				// Игнор целой папки с таким именем
 *.py[cod]				// Игнор всех файлов с расширением .pyc, .pyo, .pyd
