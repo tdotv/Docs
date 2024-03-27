@@ -129,7 +129,7 @@ sort -n numbers.txt > numbers.txt		: will create new file numbers.txt with no da
 
 grep -E [A-Za-z].txt mydatafile.doc		: using reg expr should get -E : search using regular expressions
 
-bzip2 after tar for compressing files		: bzip2 compress 1 file; tar archive files
+tar cjf myBZIP2.bz2 Folder1			: best compress and archive on linux
 ----------------------------------------------------------------------
 						SQL Server
 

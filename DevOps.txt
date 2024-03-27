@@ -29,7 +29,6 @@ DNS					|	    build = script: -msbuild; -artifact;
 					|	    deploy = CI/CD Jenkins
 					|	  }
 ==============================================================================
-
 IPv4		: 192.168.100.10	| 192.168.100 - Subnet ID, определяется по Subnet Mask
 Subnet Mask	: 255.255.255.0		| .10 	      - Host ID (255 и 0 не используется)
 
@@ -136,7 +135,13 @@ HTTP Request.Add - Assertions - Response Assertion (проверка овтет�
 
 Загрузочные файлы и конфиг https://microsin.net/adminstuff/xnix/linux-config-files.html
 
+SCP (утилита SSH)
+scp source_file_name username@destination_host:destination_folder
 
+scp -c 3des Label.pdf sedicomm-university@202.x.x.x:.	| Шифрование файла при помощь 3des
+scp -Cpv messages.log sedicomm-university@202.x.x.x:.	| Передача файлов с помощью сжатия данных,
+							| хорошо сжимаются изображения, образы, архивы
+scp -P 2249 Label.pdf sedicomm-university@202.x.x.x:.	| Передача с указанием порта (22 default)
 
 
 
