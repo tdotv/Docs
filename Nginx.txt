@@ -1,3 +1,10 @@
 					---Nginx and Apache---
 Perfomance: Nginx		Security: Nginx			Flexibility: Nginx
 OS: Apache (+ Windows)		Features and Support: Apache	Request Implementation: Apache
+
+Apache на каждого клиента создает процесс, что при масштабировании архитектуры - требует огромное количество ресурсов
+
+!Важно заметить, что при подгрузке объемных файлов с низкой скоростью у Apache процессы будут висеть ничего не делать, но тем не менее будут жрать оперативную память
+У Nginx есть workers (1 worker per core), которые могут обрабатывать кучу этих соединений и не потреблять ресурсы. Они включатся, когда приходят данные
+ 
+
