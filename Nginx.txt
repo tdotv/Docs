@@ -1,0 +1,3 @@
+					---Nginx and Apache---
+Perfomance: Nginx		Security: Nginx			Flexibility: Nginx
+OS: Apache (+ Windows)		Features and Support: Apache	Request Implementation: Apache
