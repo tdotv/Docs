@@ -1,0 +1,57 @@
+								Jenkins
+
+						Ansible AWX - система управления конфигурациями
+===== Установка =====
+pip3 install ansible
+git clone https://github.com/ansible/awx
+nano inventory ---> раскомментировать project_data_dir=/var/lib/awx/projects
+ansible-playbook install.yml -i inventory
+ip a ---> go to ip address
+
+===== Подключение проекта. Настройка и запуск. =====
+		===== Manual =====
+Создаем организацию - она будет группировать проекты HOME
+Создаем проект - SCM Type обычно выбирают либо Manual, либо Git. Name: Create File
+Manual - те playbooks, которые расположены на самом сервере AWX. /var/lib/awx/projects
+
+Inventories - то место, где указываем хосты 
+Name: home-inventory
+---> Hosts ---> Add ---> HostName: client1; Organization: HOME
+variables
+---
+ansible_host: ip-адрес клиента
+
+Credentials - чтобы работать с хостом, нужно указать credentials
+Name: client1	Organization: HOME	
+CredentialType (тип данных): Machine	 Username: root		Password: *********
+
+Можно нажать на галочку рядом с хостом, чтобы запустить команду. Например: ping; Machine Credential: client1	---> Launch
+Таким образом подключается проект, теперь нужно подключить playbook
+
+Templates ---> Add ---> 
+Name: CreateFile; JobType: Run; Inventory: home-inventory; Project: Create File; Playbook: create-file.yml;
+Credentials: client1; ---> Save
+
+		===== Git =====
+Credentials ---> Name: GitLab; Organization: Home; Type: Source Control: Username: tdotv, Password: *****
+Projects ---> Name: test-survey; Organization: Home; Type: Git; SCM URL: https url link (только dns поменять на ip-адрес); Credential: GitLab
++ поставить галочку на Update Revision On Launch
+Inventory ---> Name: Dynamic; Organization: Home; +Hosts ---> Name: dynamicHost; Variables: ansible_host:	Сохраняем
+Template ---> Name: test-survey; Job: Run; Inventory: Dynamic; Project: test-survey; Playbook: update-install-user.yml; Credentials: client1;
+
+Add Survey ---> Prompt: Install Packages; Answer Variable Name: packages (добавляем переменную с ответом, например из файла); Answer Type: Multiple
+Multiple Choice: 
+tree
+vim
+htop
+nmon
+
+		Prompt: Hostname; Answer Variable Name: hostname; Answer Type: Text
+Default Asnwer: testhost;
+		Prompt: New User; Answer: new_user; Type: Text
+Default: user1;
+		Prompt: User Password; Answer: user_pw; Type: Password
+Default: password;
+		Prompt: Host IP; Answer: ansible_host; Type: Text
+Default: 192.168.178.xxx;
+											---> Save
