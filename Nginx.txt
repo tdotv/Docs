@@ -1,10 +1,35 @@
-					---Nginx and Apache---
-Perfomance: Nginx		Security: Nginx			Flexibility: Nginx
-OS: Apache (+ Windows)		Features and Support: Apache	Request Implementation: Apache
+						---Nginx and Apache---
+Perfomance: Nginx		Security: Nginx				Flexibility: Nginx
+OS: Apache (+ Windows)		Features and Support: Apache		Request Implementation: Apache
 
-Apache на каждого клиента создает процесс, что при масштабировании архитектуры - требует огромное количество ресурсов
+#Базовая архитектура
+Apache запускает определенное количество процессов, каждый из которых обрабатывает запрос, не важно картинка это или видео
+Nginx обрабатывает асинхронно, что значит, что 1 worker nginx может обрабатывать несколько запросов одновременно. 1 worker per core
 
-!Важно заметить, что при подгрузке объемных файлов с низкой скоростью у Apache процессы будут висеть ничего не делать, но тем не менее будут жрать оперативную память
-У Nginx есть workers (1 worker per core), которые могут обрабатывать кучу этих соединений и не потреблять ресурсы. Они включатся, когда приходят данные
- 
+#Испсользование ресурсов
+Apache работает со встроенными языка программирования. У Nginx модули серверных языков не должны запускаться каждый раз при получении запроса
+
+#Производительность
+Выдает статический контент намного быстрее Apache без обращения к серверу языка. Также он обрабатывает запросы параллельно
+Также предоставляет более высокую производительность под высокой нагрузкой
+!!! Apache сбрасывает соединения при достижении максимального кол-ва запросов
+
+#Настройка
+apt-get update
+apt-get install nginx
+
+#Добавление в качестве сервиса
+wiki.nginx.org/initScripts
+cd /etc/init.d/
+wget (ссылка на raw-скрипт)
+
+sudo chmod +x nginx
+update-rc.d -f nginx defaults
+
+echo "NGINX_CONF_FILE=/etc/nginx/nginx.conf" > /etc/default/nginx
+echo "DAEMON=/usr/bin/nginx" >> /etc/default/nginx
+
+service nginx start	ИЛИ	systemctl start nginx.service
+
+#Обновление
 
