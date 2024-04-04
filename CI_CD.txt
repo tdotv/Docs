@@ -1,4 +1,53 @@
 								Jenkins
+===== Администрирование =====
+cd /usr/share/jenkins/			
+ls /usr/share/jenkins/				Смотрим .war файл с текущей версией
+sudo mv jenkins.war jenkins2.440.1.war
+sudo wget ***новая версия jenkins		 Скачиваем новую версию
+Чтобы поставить старую версию, нужно просто переименовать обратно в jenkins.war
+
+===== Plugins =====
+/var/lib/jenkins/plugins
+Credentials
+Git?
+Publish Over SSH
+
+Для создания Node:
+SSH Build Agents 
+SSH Agent
+
+===== Jobs =====
+/var/lib/jenkins/workspaces
+В настройках job обязательно поставить настройку discard old builds (5) MARK
+
+===== Slave | Node =====
+Сразу на slave машине нужно установить:
+
+sudo apt-get update
+sudo apt install apt-transport-https
+sudo apt-get install openssh-server
+sudo apt install ssh
+sudo apt-get install openjdk-11-jre
+ls /usr/lib/jvm
+sudo apt install default-jre
+
+Далее делаем:
+mkdir ~/.ssh
+ssh-keygen -t rsa -C "The access key for Jenkins slaves"
+ОБЯЗАТЕЛЬНО!!! Назначить Passphrase на этом шаге (желательно сделать разные Passphrase для разных нод)!
+cat id_rsa.pub > ~/.ssh/authorized_keys
+cd ~/.ssh
+cat id_rsa и копируем ключ.
+
+Дополнительно, после ввода Jenkins username, сразу внизу добавил галку Treat username as secret. Также не забываем про ввод Passphrase.
+
+Обязательно указываем несколько labels, например для первой ноды: ubuntu ubuntu-ansible ubuntu18
+Use this node as much as possible
+Launch via SSH	--->	Host: ***   ---> Credentials: SSH Username with private key	---> username: ubuntu	---> private key: RSA PRIVATE KEY
+---> ID && Description: ssh-key	--->	Host Key Verification: Manually trusted key
+
+Restrict where the project can be run	MARK
+
 
 						Ansible AWX - система управления конфигурациями
 ===== Установка =====
