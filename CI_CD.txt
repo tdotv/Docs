@@ -1,12 +1,12 @@
 								Jenkins
-===== Администрирование =====
+							===== Администрирование =====
 cd /usr/share/jenkins/			
 ls /usr/share/jenkins/				Смотрим .war файл с текущей версией
 sudo mv jenkins.war jenkins2.440.1.war
 sudo wget ***новая версия jenkins		 Скачиваем новую версию
 Чтобы поставить старую версию, нужно просто переименовать обратно в jenkins.war
 
-===== Plugins =====
+							===== Plugins =====
 /var/lib/jenkins/plugins
 Credentials
 Git?
@@ -16,12 +16,12 @@ Publish Over SSH
 SSH Build Agents 
 SSH Agent
 
-===== Jobs =====
+							===== Jobs =====
 /var/lib/jenkins/workspaces
 В настройках job обязательно поставить настройку discard old builds (5) MARK
 
-===== Slave | Node =====
-Сразу на slave машине нужно установить:
+							===== Slave | Node =====
+Ubuntu 22.04 Сразу на slave машине нужно установить:
 
 sudo apt-get update
 sudo apt install apt-transport-https
@@ -47,6 +47,62 @@ Launch via SSH	--->	Host: ***   ---> Credentials: SSH Username with private key	
 ---> ID && Description: ssh-key	--->	Host Key Verification: Manually trusted key
 
 Restrict where the project can be run	MARK
+
+							===== Jenkins Cli =====
+							===== Local =====
+Его можно скачать из "Manage Jenkins - Jenkins CLI"
+
+java -jar jenkins-cli.jar -auth username:password -s http://localhost:8080 who-am-i
+
+Нужно создать юзера (необязательно), чтобы внести его данные в эту строку. Поэтому в Manage Jenkins ---> Users
+username: user_cli
+Password: password123
+Full Name: My Service User
+Email (неважно): service@something.net
+
+Желательно использовать токен вместо пароля. 
+Логинимся как user_cli и создаем токен: token-cli ---> копируем, потому что потом он исчезнет и никак не посмотришь
+
+export JENKINS_USER_ID=myserviceuser
+export JENKINS_API_TOKEN=...
+env | grep JENKINS
+java -jar jenkins-cli.jar -s http://localhost:8080 who-am-i
+
+							===== Remote =====
+Опять экспортим credentials
+java -jar jenkins-cli.jar -s http://xxx.xxx.xxx.xxx:8080 who-am-i
+
+							===== Commands =====
+java -jar jenkins-cli.jar -s http://localhost:8080 get-job FirstJob > myjob.xml
+java -jar jenkins-cli.jar -s http://localhost:8080 create-job FirstJobFromCLI < myjob.xml
+
+							===== GitHub =====
+Офк нужен плагин Git
+private ssh key нужно закинуть на Jenkins
+public ssh key нужно закинуть на GitHub
+При добавлении ключа на Jenkins мы должны указать Username нашего GitHub и пароль (если нужно) в Passphrase
+
+Build Triggers:
+1. Trigger build remotely - выдается URL, по которому если перейти, запустится job (нормальная тема для curl)
+Authentication Token: abcd<3_123
+JenkinsURL/job/___/build?token=abcd<3_123
+Когда мы сделаем вызов при помощи curl по этому адресу, нам потребуется аутентификация
+После http:// вставляем имя и токен пользователя Jenkins http://tdotv:user-token@JenkinsURL/job/___/build?token=abcd<3_123
+
+2. Build after other projects are build - стартуется после завершения других билдов
+Например наш первый job при помощи Terraform поднимает сервер, и если сервер успешно поднялся, то мы Trigger only if build is state
+запускаем второй job с деплоем. Там указывается проект, который будет отслеживать Jenkins
+
+3. Build periodically - В какой день, в какой час запускать job
+
+4. Poll SCM - То же самое, что и 3, но оно проверяет репозиторий всегда. Если есть изменение, то стартует job. 
+		Указываем расписание проверки репозитория
+		
+
+
+5. Triggers from Plugins
+
+
 
 
 						Ansible AWX - система управления конфигурациями
