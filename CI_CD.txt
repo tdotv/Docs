@@ -97,13 +97,71 @@ JenkinsURL/job/___/build?token=abcd<3_123
 
 4. Poll SCM - То же самое, что и 3, но оно проверяет репозиторий всегда. Если есть изменение, то стартует job. 
 		Указываем расписание проверки репозитория
-		
-
 
 5. Triggers from Plugins
+К примеру благодаря плагину GitHub
+Ставим галку GitHub Project	--->	SSH ссылка		| Отличие от прошлого раза добавления гита, тут выполняется триггера, 
+								| а там клонирование
+Ставим галку GitHub hook trigger for GITScm pooling 
 
+В репозитории на GitHub ---> Settings ---> Webhooks ---> Add ---> Ссылка на Jenkins 
+(обязательно, чтобы был открыт порт 8080 для интернета), например http://localhost:8080/github-webhook/ ---> application/json
 
+Открыть порт 53: iptables -I INPUT -p tcp -m tcp --dport 53 -j ACCEPT	| Утилита iptables
+Какие порты прослушиваются: netstat -an | grep LISTEN
 
+							===== Build с Параметрами =====
+
+Build с Параметрами:						| К примеру мы просматриваем директорию /etc, и нам надо теперь просматривать /var
+ls -la /var							| Заходить вручную менять постоянно - плохо, job вообще трогать минимально
+Ставим галочку на this project is parameterized (Choice или String (Password Parameter херня полная)). 
+Все данные указываем большими буквами, потому что они могут использоваться потом как Environmental Variable
+Name: FOLDERNAME
+Default Value: /home
+Description: Please enter Linux folder name to list
+
+Меняем скрипт: ls -la $FOLDERNAME
+
+							===== Deploy в AWS Elastic Beanstalk =====
+Services ---> Elastic Beanstalk ---> Create Web App --->  Application Name: Jenkins App; Platform: к примеру PHP; Application Code: Sample; ---> Configure More Options ---> High Availability 
+!---> Capacity Edit ---> Instances: min 2 - max 4 ---> Metric: CPU Utilization ---> Unit: Percent ---> Upper threshold: 80 && Lower threshold: 20 ---> Save
+!---> Rolling updates and deployment ---> Deployment Policy: Rolling ---> Rolling update type: Rolling based on Health
+
+Создаем User в AWS для Jenkins
+IAM ---> Users ---> User Name: jenkins ---> Attach existing polices ---> Next ---> Create User (Копируем Acess Key ID && Secret Key)
+
+Создаем репозиторий ---> Закидываем туда Sample Application Code из AWS
+
+Jenkins
+Скачиваем плагин (AWS Elastic Beanstalk) AWSEB Deployment
+Description: This job will deploy our PHP code from GitHub to AWS Elastic Beanstalk
+Discard old builds: max 5
+GitHub Project: Ссылка на репозиторий (URL)
+Source Code Management: Git (SSH) + Credentials
+GitHub hook trigger ---> Добавить Webhook
+
+Jenkins Build:
+AWS Elastic Beans ---> Credentials: AWS Credentials; ID && Description: jenkins-aws-beanstalk; И ключи, который давались раньше
+		  ---> AWS Region: Регион веб-сервера, можно посмотреть в URL, например region=us-east-2 (Ohio)
+		  ---> Number of Attempts: 30 
+Application Name && Environment Name
+Packaging ---> Root Object: .	(все файлы, больше ничего указывать не надо в этом разделе)
+Version and Deployment ---> Version Label Format: Jenkins-Build-${BUILD-ID}
+Save
+
+							===== Pipeline =====
+agent { docker { image 'pyhon:latest' }}
+
+environment {
+  PROJECT_NAME = "MyProject"
+  OWNER_NAME = "tdotv"
+}
+
+stages {
+  stage("1-Stage") {
+    echo "Project Name is ${PROJECT_NAME}"
+  }
+}
 
 						Ansible AWX - система управления конфигурациями
 ===== Установка =====
