@@ -163,6 +163,17 @@ stages {
   }
 }
 
+							===== Pipeline =====
+stage("docker login") {
+  steps {
+    echo "docker login"
+    withCredentials([usernamePassword(credentialsId: 'dockerhub_semaev', usernameVariable: 'USERNAME', passwordValue: 'PASSWORD')])
+    sh '''
+    docker login -u $USERNAME -p $PASSWORD
+    '''
+  }
+}
+------------------------------------------------------------------------------------------------------------------------------------
 						Ansible AWX - система управления конфигурациями
 ===== Установка =====
 pip3 install ansible
