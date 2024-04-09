@@ -1,80 +1,91 @@
-								docker-file
-{
-FROM python:3.6
+-------------------- Основные Команды --------------------
 
-RUN mkdir -p /usr/src/app/				// Run - Нужно выполнить какуж-то определенную команду - создать папку mkdir
+docker run hello-world					| Проверка работосопобности Docker путем pull'а
 
-WORKDIR /usr/src/app/					// Переход в заданный каталог
+docker run						| СОЗДАНИЕ контейнера : <-d> возвращает сразу консоль, не дожидаясь окончания работы
+							| <--rm> после остановки контейнера ---> удаляет его; --name указываем имя контейнеру
 
-COPY . /usr/src/app/					// Откуда . -> Куда /usr/...
+docker ps						| Docker процессы (активные) : <-a> показывает все контейнеры
 
-CMD ["python", "app.py"]				// Что надо докеру сделать - выполнить команду python app.py - оболочка shell
+docker rm c6						| Удаляем контейнер с ID c6ea97...
 
-//ENTRYPOINT ["python", "app.py"]			// Без оболочки shell
-}
+docker system prune -a --volumes			| Удаляет абсолютно все (важно заметить, что касаемо контейнеров только остановленные удаляет)
+
+docker images						| Docker образ	: <rmi> удаляет образ
+
+Alpine часто используют для построения других образов ( docker pull alpine:latest )
+
+docker start						| ЗАПУСКАЕТСЯ контейнер (который уже созданный)
+
+docker pause c6		/	docker unpause c6	| Приостановить / возобновить работу контейнера
+
+docker stop c6						| Остановить полностью работу контейнера
+
+docker kill c6						| Убить контейнер
+
+docker exec -it c6 /bin/bash 					| Позволяет зайти в контейнер интерактивно
+
+			# Полезная инфа
+docker inspect c6					| Вся информация по контейнеру
+
+docker stats						| Ресурсы потребляемые контейнерами
+
+docker logs c6						| Смотрим logs программы : <-f> показывает актуальные логи
+
+!!! docker run -d --rm --name My-Container ubuntu:20.04 echo "Hello Docker"
+
+-------------------- Управление портами: Port Mapping --------------------
+
+docker run -p 8080:80 nginx				| Порт 80 открыт только в контейнере, но этой командой мы его пробрасываем также на сервер
+							| Таким образом теперь можно подключиться к серверу с портом 8080, и сервер направит на nginx
+
+Обычно требуемые порты пишутся в документации к образу на DockerHub
+
+-------------------- Переменные в Docker: Environmental Variables --------------------
+
+docker run --name DB-mysql -e MYSQL_ROOL_PASSWORD=pw1234 -e HEHE=hehe -d mysql	| Передаем переменную контейнеру (важно понимать, что юзер тут - root)
+docker exec -it DB-mysql /bin/bash
+> env							| Показывает системные переменные
+> mysql -p						| Вход в MySQL при помощи этой системной переменной
+
+docker exec -it DB-mysql mysql -uroot -p		| То же самое :)
+
+-------------------- Постоянные данные: Docker Volumes --------------------
+
+docker volume ls					| Без volumes после убийства контейнера ---> все измененные данные исчезнут
+
+docker volume create infos				| Создание volume с именем infos ( /var/lib/docker/ )
+
+docker volume rm infos					| Удаление volume с именем infos
+
+Host Volumes	|	Anonymous Volumes	|	Named Volumes
+
+### Host Volumes
+mkdir /opt/nginx
+mkdir /opt/nginx/data
+docker run --name web01 -p 80:80 -v /opt/nginx/data:/usr/share/nginx/html -d nginx	| Показываем откуда брать данные для nginx (их нужно создать)
+
+### Anonymous Volumes - Хрень короче, дата еще и удалится потом. НЕ ЮЗАТЬ!!!
+cd /var/lib/docker/
+cd volumes
+docker run --rm --name web01 -p 80:80 -v /usr/share/nginx/html -d nginx		| Неудобно, что название volumes не задается, а hash
+
+### Names Volumes
+docker run --name web01 -p 80:80 -v web_data:/usr/share/nginx/html -d nginx	| Даем имя создавшемуся volume ( /var/lib/docker/ )
+
+-------------------- Сети в Docker: Network --------------------
 
 
-								web-docker-file
-{
-FROM python:3.6
 
-RUN mkdir -p /usr/src/app/
 
-WORKDIR /usr/src/app/	
 
-COPY . /usr/src/app/
 
-RUN pip install  --no-cache-dir -r requirements.txt	// Супер крутая темка
 
-EXPOSE 8080						// Декларация проброски порта 8080
 
-CMD ["python", "app.py"]
-}
 
-----------------------------------------------------------------------------------------------------------------------------------
 
-docker build -t hello-world .						Создать свой докер образ (-t - tag) (путь - . текущая директория)
 
-docker run hello-world							Запустить образ с именем hello-world -> Он отработает и остновился, 
-									т.е. его не будет в ps
 
-docker ps								Просмотр РАБОЧИХ контейнеров
-docker ps -a								Просмотреть ВСЕ контейнеры
-
-docker run --name hello hello-world					Запускаем контейнер с образом hello-world и даем ему имя hello
-
-docker rm ...								Удаление контейнера -> ... = или по имени или по container ID
-
-docker ps -a -q								Вывод только ID контейнеров
-
-docker rm $(docker ps -qa)						Удаление всех контейнеров, которые у нас были
-
-docker run --name hello -d hello-world					Контейнер запустится и будет работать в фоне
-
-docker stop hello							Остановить 
-
-docker run --name hello -d --rm hello-world				Когда контейнер отработает или остановится -> он удалится
-
-docker run --rm --name web -p 8080:8080 -e TZ=Europe/Moskow web-hello	Порты - порт нашей машина:порт внутри нашего контейнера
-
-docker volume ls							Просмотр "папок с базой данных"
-
-docker volume create web						Создать волюм
-
-docker run --rm --name web -p 8080:8080 -v web:/usr/src/app/resources web-hello		Актуально для баз данных
-
-docker images								Просмотр образов
-
-docker rmi ...								Удаление образа по имени или его ID
-
-docker rmi $(docker images -q)						Удаление none-образов
-
-------------------------------------------------------------------------------------------------------------------------------------------
-
-							docker-compose
-...
-
-------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
