@@ -117,15 +117,16 @@ Dockerfile
   	tree \ 
   	mc						| Таким образом создаем один слой и скачиваем сразу несколько пакетов
   
-  WORKDIR /var/www/html/				| Рабочие директории
+  WORKDIR /var/www/html/				| Рабочие директории - Как бы указываем докеру в какую директорию перейти
+  							| . это и есть рабочая директория
   
-  COPY files2/index.html
-  COPY files2/script.sh /opt/script.sh			| Файлы
+  COPY files2/index.html .
+  COPY files2/script.sh /opt/script.sh			| Файлы - Volumes
   
-  RUN chmod +x /opt/script.sh				| Работа с файлами
+  RUN chmod +x /opt/script.sh				| Работа с файлами. Делаем наш скрипт executable
   
   ENV OWNER="tdotv"
-  ENV TYPE=demo						| Указание переменных
+  ENV TYPE=demo						| Указание переменных : -e TYPE=prod
   
   EXPOSE 80						| Порты (ничего не делает для образа, носит инф. контекст)
   
@@ -144,12 +145,18 @@ docker build -t myImage:v01 .				| Создание образа
 docker run -d --rm --name mydocker -p 80:80 myimagex:v01
 =====================================
 
+#!/bin/bash
 
+sed -i 's|%OWNER%|'"$OWNER"'|g' /var/www/html/index.html
+sed -i 's|%TYPE%|'"$TYPE"'|g' /var/www/html/index.html
 
+echo "Start Script --- OK"
 
+nginx -g 'daemon off;'
 
+И ТЕПЕРЬ В Dockerfile ---> CMD ["/opt/script.sh"]
 
-
+-------------------- Docker Compose. Применение --------------------
 
 
 
