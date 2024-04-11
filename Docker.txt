@@ -158,19 +158,128 @@ nginx -g 'daemon off;'
 
 -------------------- Docker Compose. Применение --------------------
 
+- Используется для управление одним или несколькими контейнерами
+- Содержит инструкции по запуску контейнера(ов)
+- Упрощает автоматизацию запуска контейнеров
+- Описывается в YML файле: docker-compose.yml
 
+			Docker CLI
+docker run
+--name web-server
+-v /opt/web/html:/var/www/html
+-v /opt/web/pics:/var/www/pictures
+-e NGINX_HOST=web.tdotv.de
+-e NGINX_PORT=80
+-d
+-p 80:80
+-p 443:443
+-net webnet
+nginx:stable
 
+		Docker Compose - docker-compose.yml
+version: "3.5"						| Версия Docker Compose
+services: 						| Описание работы всех контейнеров (т.е. сервис - один контейнер)
+  web-server
+    image: nginx:stable
+    container_name: mynginx
+    volumes:
+      - "/opt/web/html:/var/www/html"
+      - "/opt/web/pics:/var/www/pictures"
+      - "nginx-config:/var/www/config"
+    environment:
+      - "NGINX_HOST=web.tdotv.de"
+      - "NGINX_PORT=80"
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped # always/no/on-failure
+volumes:
+  nginx-config:
+networks:
+  default:
+    driver: bridge
+    name: webnet
 
+docker compose up (-d)
 
+===================================================
 
+docker run
+--name app
+-p 80:80
+--net appnet
+php:apache
+############
+docker run
+--name app-postgres
+-e 'POSTGRES_PASSWORD=mypass'
+--net appnet
+postgres
+############
+docker run
+--name app-redis
+--net appnet
+redis
 
+version: "3.5"
+services:
+  php-app:
+    image: php:apache
+    container_name: app
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:						| Запускается после запуска других контейнеров
+      - app-db
+      - app-redis
+    networks:
+      - internet
+      - localnet
+  
+  app-db:
+    image: postgres
+    container_name: app-postgres
+    restart: unless_stopped
+    environment:
+      - "POSTGRES_PASSWORD=mypass"
+    networks:
+      - localnet
+  
+  redis:
+    image: redis
+    container_name: app-redis
+    restart: unless-stopped
+    networks:
+      - localnet
 
+networks:
+  internet:
+    name: internet
+    driver: bridge
+  localnet:
+    name: localnet
+    driver: bridge
+    
+docker compose logs -f
 
+-------------------- Portainer – Web UI для управления Docker --------------------
 
+version: "3.5"
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/portainer/portainer_data:/data
+    ports:
+      - "8000:8000"
+      - "9443:9443"
+    restart: always
 
-
-
-
+Environments, Stacks=Compose
 
 
 
