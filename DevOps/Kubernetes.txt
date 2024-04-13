@@ -10,9 +10,12 @@ Kubernetes Cluster состоит из Nodes:
 1. Worker Node - сервер на котором запускаются и работают контейнеры 2. Master Node - сервер, который управляет Worker Nodes
 
 Worker Node:
-  - kubelet							| Общается с API сервером
+  - kubelet							| Сервис, который отвечает за коммуникацию между разными узлами (общается с API)
   - kube-proxy							| Является сетевым интерфейсом
 Master Node:
   - kube-apiserver						| API, которая обрабатывает запросы manager и scheduler
-  - kube-controller-manager
-  - kube-scheduler
+  - kube-controller-manager					| Планировать и распределять нагрузку LoadBalancer
+  - kube-scheduler						|
+  
+Pod - это самый маленький элемент в мире Kubernetes
+
