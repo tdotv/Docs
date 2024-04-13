@@ -1,0 +1,18 @@
+https://labs.play-with-k8s.com/					| K8s
+
+Автоматизация Развертывания приложений
+Автоматизация Масштабирования приложений
+Автоматизация Управления приложениями
+
+Главная Контейнеризированная технология - Docker
+
+Kubernetes Cluster состоит из Nodes: 
+1. Worker Node - сервер на котором запускаются и работают контейнеры 2. Master Node - сервер, который управляет Worker Nodes
+
+Worker Node:
+  - kubelet							| Общается с API сервером
+  - kube-proxy							| Является сетевым интерфейсом
+Master Node:
+  - kube-apiserver						| API, которая обрабатывает запросы manager и scheduler
+  - kube-controller-manager
+  - kube-scheduler
