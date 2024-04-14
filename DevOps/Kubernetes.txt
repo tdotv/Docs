@@ -1,4 +1,4 @@
-https://labs.play-with-k8s.com/					| K8s
+https://labs.play-with-k8s.com/				| K8s
 
 Автоматизация Развертывания приложений
 Автоматизация Масштабирования приложений
@@ -10,12 +10,53 @@ Kubernetes Cluster состоит из Nodes:
 1. Worker Node - сервер на котором запускаются и работают контейнеры 2. Master Node - сервер, который управляет Worker Nodes
 
 Worker Node:
-  - kubelet							| Сервис, который отвечает за коммуникацию между разными узлами (общается с API)
-  - kube-proxy							| Является сетевым интерфейсом
+  - kubelet						| Сервис, который отвечает за коммуникацию между разными узлами (общается с API)
+  - kube-proxy						| Является сетевым интерфейсом
 Master Node:
-  - kube-apiserver						| API, которая обрабатывает запросы manager и scheduler
-  - kube-controller-manager					| Планировать и распределять нагрузку LoadBalancer
-  - kube-scheduler						|
+  - kube-apiserver					| API, которая обрабатывает запросы manager и scheduler
+  - kube-controller-manager				| Планировать и распределять нагрузку LoadBalancer
+  - kube-scheduler					|
   
 Pod - это самый маленький элемент в мире Kubernetes
+
+Для домашнего обучения установил отдельно minicube и отдельно kubectl
+
+kubectl cluster-info					| Показывает информацию о кластере. Тут отличается версия клиента и сервера
+
+minikube kubectl cluster-info				| Это как бы встроенный kubectl в minicube. Интересно, но версии кл. и серв. одинаковые
+
+kubectl get nodes					| Показывает информацию о нодах в кластере. Control-plane = master-node
+
+kubectl get pods					| Показывает информацию о подах в кластере : <-o wide> показывает IP адреса подов
+
+kubectl get namespaces					| Пространства имен. 
+
+minikube ip						| IP-адрес ноды
+
+minikube ssh						| Подключиться к ноде по ssh. Тут введем docker ps и посмотрим запущенные контейнеры в ноде
+
+!!! Kubernetes независим от компьютера на котором она запущена. Это подтверждается тем, что версии на компьютере и в Kubernetes могут отличаться. По сути Docker нужен лишь для запуска контейнера с Kubernetes.
+
+kubectl run my-nginx-podd --image=nginx			| Создание пода в котором автоматически создастся контейнер с образом nginx
+
+kubectl describe pod my-nginx-pod			| Описание пода
+
+***
+Получить доступ к веб-серверу вне контейнера невозможно; Если зайти внутрь ноды, то уже возможно получить доступ
+Для каждого пода создается post контейнер, чтобы зарезервировать пространство ресурсов. Например зарезервировать IP-адрес
+У пода и у контейнеров внутри него одинаковый IP-адрес
+***
+
+kubectl delete pod my-nginx-pod				| Удаляет под
+
+kubectl create deploy my-nginx-deploy --image=nginx	| Создание деплоя с контейнером nginx. У всех подов будут одинаковые образы (nginx)
+
+kubectl describe deploy my-nginx-deploy			| Описание деплоя
+
+my-nginx-deploy-785cb5c9f4-fzm62			| Название деплоя - ID реплики сет - ID определенного пода
+							| ID реплика сет будет для разных подов в одном деплое будет одинаковым
+							| ID опр. пода в одном деплое будет у всех разное
+							
+kubectl scale deploy my-nginx-deploy --replicas=3	| Добавляем поды в деплой !!! Под = реплика
+
 
