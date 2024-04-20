@@ -174,6 +174,73 @@ stage("docker login") {
   }
 }
 ------------------------------------------------------------------------------------------------------------------------------------
+
+Предположим у нас есть проект с docker-compose, в котором есть postgres и project. У project есть зависимость от postgres.
+
+#docker-compose.yml
+services:
+  yt_postgres:
+    image: postgres:15
+    container_name: yt_postgres
+    env_file:
+      - $env
+  project:
+    image: yt_django:test
+    build: 
+      context: ../../.				# Выходу в корень докера, а потом в корень проекта. В корне проекта видим Dockerfile
+    container_name: yt_django
+    env_file:
+      - $env
+    depends_on:
+      - yt_postgres
+    command: >
+      bash -c "sleep 10 && python manage.py test"	# Ждем 10 секунд пока Бд инициализируется и запускаем приложение
+      
+!!! Все настройки для Postgres к примеру описываем в файле env, который, очевидно, будет в gitignor'е. И в гитлаб раннере его тоже не будет
+Поэтому стоит добавить новую переменную в типе файла и вставляем всю инфу в содержимое.
+
+#.gitlub-ci.yml
+stages:
+  - test
+  - delievery
+  - deploy
+  
+test-job:
+  stage: test
+  script:
+    - docker compose -f docker/test/docker-compose.yml down				# Убиваем возможный докер контейнер
+    - docker compose -f docker/test/docker-compose.yml build project			# Принудительно билдим наш образ 
+    - docker compose -f docker/test/docker-compose.yml up --abort-on-container-exit	# Когда manage.py test выполнится, то наш youtube завершит
+    											  работу, а заодно и БД благодаря флагу
+    											  
+delievery-job:
+  stage: delievery
+  only:
+    - main						# Будет срабатывать, только после merge в главную ветку. И пушит туда новый образ
+  script:
+    - docker login -p $DOCKER_REGISTRY_KEY -u $DOCKER_REGISTRY_USER registry.soaqa.ru
+    - docker tag yt_django:test $CI_REGISTRY_IMAGE
+    - docker push $CI_REGISTRY_IMAGE
+    
+Качаем новую версию образа: docker-compose pull project --> docker compose up		# Ручное CD
+
+deploy-job:
+  stage: deploy
+  when: manual
+  only:
+    - main
+  script:
+    - ssh server deploy.sh								# Автоматический CD
+    
+											# CD используя Watchtower. В docker-compose.yml
+watchtower:
+  image: containrrr/watchrower
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /root/.docker/config.json:/config.json
+  command: --interval 30 yt_django
+
+------------------------------------------------------------------------------------------------------------------------------------
 						Ansible AWX - система управления конфигурациями
 ===== Установка =====
 pip3 install ansible
