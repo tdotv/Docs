@@ -239,6 +239,79 @@ watchtower:
     - /var/run/docker.sock:/var/run/docker.sock
     - /root/.docker/config.json:/config.json
   command: --interval 30 yt_django
+  
+  
+Пример с курсовой GitLab:
+stages: 
+  - build 
+  - test 
+  - deploy 
+ 
+image: docker:19.03.12 
+services: 
+  - docker:dind 
+ 
+variables: 
+  STACK_NAME: isnta_api 
+  VERSION: ${CI_COMMIT_TAG} 
+  IMAGE_NAME: ${DOCKER_REGISTRY}/${CI_PROJECT_PATH}:${CI_COMMIT_TAG} 
+ 
+before_script: 
+  - echo $STACK_NAME 
+  - echo $CI_REGISTRY 
+  - echo $IMAGE_NAME 
+ 
+build_main: 
+  stage: build 
+  script: 
+    - docker login -u "frameepower" -p "Coldmar1234" 
+    - echo "Building the project..." 
+    - | 
+      if docker ps -a --format '{{.Names}}' | grep -q "^mycontainer_main$"; then 
+        echo "Удаляем контейнер mycontainer_main" 
+        docker rm -f mycontainer_main 
+      else 
+        echo "Контейнер mycontainer_main не найден" 
+      fi 
+    - docker build -t hello_world_flask:master -f python/Dockerfile . 
+    - docker tag hello_world_flask:master frameepower/abibok:master 
+    - docker push frameepower/abibok:master 
+  rules: 
+    - if: '$CI_COMMIT_BRANCH == "main"' 
+ 
+build_feature: 
+  stage: build 
+  script: 
+    - docker login -u "frameepower" -p "Coldmar1234" 
+    - | 
+      if docker ps -a --format '{{.Names}}' | grep -q "^mycontainer_feature$"; then 
+        echo "Удаляем контейнер mycontainer_feature" 
+        docker rm -f mycontainer_feature 
+      else 
+        echo "Контейнер mycontainer_feature не найден" 
+      fi 
+    - echo "Building the project..." 
+    - docker build -t hello_world_flask:feature -f python/Dockerfile . 
+    - docker tag hello_world_flask:feature frameepower/abibok:feature 
+    - docker push frameepower/abibok:feature 
+  rules: 
+    - if: '$CI_COMMIT_BRANCH == "feature"'     
+ 
+deploy_main: 
+  stage: deploy 
+  script: 
+    - echo "Deploying the project..." 
+    - docker run -d -p 8081:80 --name mycontainer_main hello_world_flask:master 
+  rules: 
+    - if: '$CI_COMMIT_BRANCH == "main"'     
+ 
+deploy_feature: 
+  stage: deploy 
+  script: 
+    - echo "Deploying the project..." 
+    - docker run -d -p 8082:80 --name mycontainer_feature hello_world_flask:feature 
+  rules: 
+    - if: '$CI_COMMIT_BRANCH == "feature"'
 
 ------------------------------------------------------------------------------------------------------------------------------------
 						Ansible AWX - система управления конфигурациями
