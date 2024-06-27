@@ -86,6 +86,18 @@ diff hello.c hello2.c
 
 patch, cvs
 
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+BLOB (Binary Large Object) - большой тип данных в системе баз данных. BLOB может хранить большой объем данных, типы документов и даже медиа-файлы, такие как аудио или видео файлы. Поля BLOB выделяют место только при использовании содержимого в поле. BLOB выделяет места в Giga Bytes.
+
+Хранить их стоит только в формате ID - BLOB. !!!
+
+Минусы:
+1. speed vs having files on the file system.
+
+2. caching. IMO the web server will do a better job of caching static contents. The DB will do a good job too, but if the DB is also handing all sorts of other queries, don't expect those large documents to stay cached for long. You essentially have to transfer the files twice. Once from the DB to the Web server, and then web server to client.
+
+3. Memory constraints. At my last job we had an 40MB PDF in the database, and kept getting Java OutOfMemoryErrors in the log file. We eventually realized that the entire 80MB PDF was read into the heap not just once, but TWICE thanks to a setting in Hibernate ORM (if an object is mutable, it makes a copy for editing in memory). Once the PDF was streamed back to the user, the heap was cleaned up, but it was a big hit to suck 80MB out of the heap at once just to stream a document. Know your code and how memory is being used!
 
 
 
