@@ -1,0 +1,15 @@
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/bin/Debug/net8.0/CLRviac#
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/bin/Debug/net8.0/CLRviac#.deps.json
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/bin/Debug/net8.0/CLRviac#.runtimeconfig.json
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/bin/Debug/net8.0/CLRviac#.dll
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/bin/Debug/net8.0/CLRviac#.pdb
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.GeneratedMSBuildEditorConfig.editorconfig
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.AssemblyInfoInputs.cache
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.AssemblyInfo.cs
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.csproj.CoreCompileInputs.cache
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.sourcelink.json
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.dll
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/refint/CLRviac#.dll
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.pdb
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/CLRviac#.genruntimeconfig.cache
+/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/Debug/net8.0/ref/CLRviac#.dll
