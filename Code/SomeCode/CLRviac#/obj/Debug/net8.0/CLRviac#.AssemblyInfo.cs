@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CLRviac#")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f28d449144ad89605e161b4d77862ecc2d76e298")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f9ee3bc790521e03b949db10c9a1da2d3ce2992")]
 [assembly: System.Reflection.AssemblyProductAttribute("CLRviac#")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CLRviac#")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
