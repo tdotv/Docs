@@ -3,6 +3,8 @@ using System.Runtime;
 using System.Runtime.ConstrainedExecution;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.Win32.SafeHandles;
+using System.Runtime.InteropServices;
 
 public class GCDebugging
 {
@@ -171,4 +173,33 @@ public abstract class SafeHandle : CriticalFinalizerObject, IDisposable
     // public void DangerousAddRef(ref Boolean success) { ... }
     // public IntPtr DangerousGetHandle() { ... }
     // public void DangerousRelease() { ... }
+}
+
+internal static class SomeType {
+    [DllImport("Kernel32", CharSet = CharSet.Unicode, EntryPoint = "CreateEvent")]
+    // This prototype is not robust
+    private static extern IntPtr CreateEventBad(
+        IntPtr pSecurityAttributes, Boolean manualReset, Boolean initialState, String name);
+
+    // This prototype is robust
+    [DllImport("Kernel32", CharSet = CharSet.Unicode, EntryPoint = "CreateEvent")]
+    private static extern SafeWaitHandle CreateEventGood(
+        IntPtr pSecurityAttributes, Boolean manualReset, Boolean initialState, String name);
+
+    public static void SomeMethod(){
+        IntPtr handle = CreateEventBad(IntPtr.Zero, false, false, null);
+        SafeWaitHandle swh = CreateEventGood(IntPtr.Zero, false, false, null);
+    }
+}
+
+public static class FileTest {
+    public static void Main()
+    {
+        Byte[] bytesToWrite = new Byte[] {1,2,3,4,5};
+        using(FileStream fs = new FileStream("Temp.dat", FileMode.Create))  // using call Dispose
+        {
+            fs.Write(bytesToWrite, 0, bytesToWrite.Length);
+        }
+        File.Delete("Temp.dat");    // Without Dispose() throws IO.Exception because file is opened
+    }
 }
