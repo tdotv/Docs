@@ -8,24 +8,27 @@
     "net8.0": []
   },
   "packageFolders": {
-    "/home/tdotv/.nuget/packages/": {}
+    "C:\\Users\\Олег\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/CLRviac#.csproj",
+      "projectUniqueName": "C:\\Users\\Олег\\Documents\\Docs\\Code\\SomeCode\\CLRviac#\\CLRviac#.csproj",
       "projectName": "CLRviac#",
-      "projectPath": "/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/CLRviac#.csproj",
-      "packagesPath": "/home/tdotv/.nuget/packages/",
-      "outputPath": "/home/tdotv/Documents/Docs/Code/SomeCode/CLRviac#/obj/",
+      "projectPath": "C:\\Users\\Олег\\Documents\\Docs\\Code\\SomeCode\\CLRviac#\\CLRviac#.csproj",
+      "packagesPath": "C:\\Users\\Олег\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Олег\\Documents\\Docs\\Code\\SomeCode\\CLRviac#\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/tdotv/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Олег\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -38,6 +41,11 @@
         "warnAsError": [
           "NU1605"
         ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -59,7 +67,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.107/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.303/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
