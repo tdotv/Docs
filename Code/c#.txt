@@ -73,3 +73,44 @@ Optimized					Сборщик мусора выполнит сборку толь
 Луше использовать классы, производные от SafeHandle, чтобы работать с родными ресурсами объектов.
 
 !!! При определении собственного типа, реализующего интерфейс IDisposable, обязательно следует написать во всех методах и свойствах код для вызова исключения System.ObjectDisposedException, если объект был явно очищен. ДА И ВООБЩЕ ИСПОЛЬЗОВАТЬ Dispose СЛЕДУЕТ ИЗБЕГАТЬ (только если точно не уверен, что этот ресурс не понадобится, как в примере с попыткой удалить открытый файл)
+
+
+---------- Cancellation Token ----------
+CancellationTokenSource - This is the object responsible for creating a cancellation token and sending a cancellation request to all copies of that token.
+CancellationToken - This is the structure used by listeners to monitor the token’s current state.
+
+Вызываем метод CancellationTokenSource.Cancel(), который устанавливает для свойства CancellationToken.IsCancellationRequested значение true. Стоит понимать, что сам по себе метод CancellationTokenSource.Cancel() не отменяет задачу, он лишь посылает уведомление об отмене через установку свойства CancellationToken.IsCancellationRequested. Каким образом будет происходить выход из задачи, это решает сам разработчик.
+Класс CancellationTokenSource реализует интерфейс IDisposable. И когда работа с объектом CancellationTokenSource завершена, у него следует вызвать метод Dispose для освобождения всех связанных с ним используемых ресурсов. (Вместо явного вызова метода Dispose можно использовать конструкцию using).
+Есть 2 варианта отмены задачи: return -> TaskStatus.RanToCompletion, а не TaskStatus.Canceled; и сгенерировать исключение OperationCanceledException
+
+---------- DDD ----------
+public class Book
+{
+    public const int PromotionalTextLength = 200;
+ 
+    public int BookId { get; private set; }          
+    //… all other properties have a private set
+ 
+    //These are the DDD aggregate propties: Reviews and AuthorLinks || IEnumerable!!!
+    public IEnumerable<Review> Reviews => _reviews?.ToList();
+    public IEnumerable<BookAuthor> AuthorsLink => _authorsLink?.ToList();
+ 
+    //private, parameterless constructor used by EF Core
+    private Book() { } 
+ 
+    //public constructor available to developer to create a new book
+    public Book(string title, string description, DateTime publishedOn, 
+        string publisher, decimal price, string imageUrl, ICollection<Author> authors)
+    {
+        //code left out 
+    }
+ 
+    //now the methods to update the book’s properties
+    public void UpdatePublishedOn(DateTime newDate)…
+    public IGenericErrorHandler AddPromotion(decimal newPrice, string promotionalText)…               
+    public void RemovePromotion()…
+ 
+    //now the methods to update the book’s aggregates 
+    public void AddReview(int numStars, string comment, string voterName, DbContext context)…
+    public void RemoveReview(Review review)…                        
+}

@@ -40,4 +40,3 @@ able.IsDistinct(
     })
 )
 -- RESULT : true
-

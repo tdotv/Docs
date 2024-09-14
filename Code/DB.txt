@@ -1,0 +1,9 @@
+--------------- Indexes in SQL Server ---------------
+Всякий раз, когда БД хочет получить данные из таблицы - оно запускает два разных механизма для поиска данных:
+1. Table scan
+2. Index scan/seek
+
+Indexes make the search operation faster by creating a B-Tree (Balanced Tree) structure internally
+The SQL Server uses indexes of a table provided that the select or update or delete statement contained the “WHERE” clause and moreover the where condition column must be an indexed column. 
+If the select statement contains an “ORDER BY” clause then also the indexes can be used.
+
