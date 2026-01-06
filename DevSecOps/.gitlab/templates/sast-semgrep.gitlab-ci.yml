@@ -1,0 +1,23 @@
+semgrep:
+  stage: test
+  image: semgrep/semgrep
+  variables:
+    FILE_REPORT: gl-sast-report.json
+    SEMGREP_RULES: >-
+      p/security-audit
+      p/secrets
+      p/python
+      p/django
+      p/nodejs
+      p/javascript
+      p/typescript
+  tags:
+    - docker
+  allow_failure: true
+  script:
+    - semgrep ci --gitlab-sast > $FILE_REPORT || true
+    - apk add jq bash coreutils
+    - bash .gitlab/.ci-scripts/sast.sh
+  artifacts:
+    reports:
+      sast: $FILE_REPORT

@@ -1,0 +1,9 @@
+stages:
+  - code_analysis
+
+code_analysis:
+  stage: code_analysis
+  script:
+    - powershell -File .ci-scripts/code_review.ps1 -GitLabToken $GITLAB_TOKEN -GitLabApiUrl $GITLAB_API_URL -RepositoryId $REPOSITORY_ID -OpenAiApiKey $OPENAI_API_KEY
+  only:
+    - merge_requests

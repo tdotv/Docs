@@ -1,0 +1,15 @@
+dependency_scanning_custom:
+  stage: test
+  variables:
+    FILE_REPORT: gl-dependency-scanning-report.json
+    NAME_OF_CI_SCRIPT: "dependency_scanning"
+    GEMNASIUM_IGNORE_OPTIONAL: "true"
+  image: registry.gitlab.com/gitlab-org/security-products/analyzers/gemnasium:latest
+  tags:
+    - docker
+  allow_failure: true
+  artifacts:
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
+  script:
+    - !reference [.analyzer_run, script]

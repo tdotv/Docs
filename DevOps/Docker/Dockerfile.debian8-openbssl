@@ -1,0 +1,88 @@
+ARG CMAKE_LINK=https://cmake.org/files/v3.28/cmake-3.28.0-rc5-linux-x86_64.sh
+ARG CMAKE_FILE=cmake-3.28.0-rc5-linux-x86_64.sh
+
+ARG LIBCAP_LINK=https://github.com/stevegrubb/libcap-ng.git
+ARG LIBNL_LINK=https://github.com/thom311/libnl.git
+ARG LZO_LINK=https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+
+# Stage 1: Base image with updated apt and essential tools
+FROM debian:jessie-slim AS base
+LABEL maintainer="turilskijo@solit.by" version="1.0" description="Optimized Dockerfile for building OpenVPN for Debian8"
+
+RUN echo deb http://archive.debian.org/debian-security/ jessie/updates main non-free contrib >> /etc/apt/sources.list && \
+    echo deb-src http://archive.debian.org/debian-security/ jessie/updates main non-free contrib >> /etc/apt/sources.list && \
+    echo deb http://archive.debian.org/debian/ jessie main >> /etc/apt/sources.list && \
+    echo deb-src http://archive.debian.org/debian/ jessie main >> /etc/apt/sources.list
+
+# Install essential tools
+RUN (apt-get update || true) && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    pkg-config \
+    git \
+    python3 \
+    wget \
+    ca-certificates \
+    automake \
+    libtool \
+    bison \
+    flex --force-yes \
+    && rm -rf /var/lib/apt/lists/*
+
+# Stage 2: Prepare CMake and libraries
+FROM base AS prepare
+ARG CMAKE_LINK
+ARG CMAKE_FILE
+ARG LIBCAP_LINK
+ARG LIBNL_LINK
+ARG LZO_LINK
+
+# Install CMake
+WORKDIR /tmp
+RUN wget --no-check-certificate ${CMAKE_LINK} && \
+    (yes | head -n 1; echo y) | sh ${CMAKE_FILE} && \
+    rm ${CMAKE_FILE}
+
+# Build libcap-ng
+WORKDIR /tls/openvpn
+RUN git clone --depth 1 --branch v0.8.5 ${LIBCAP_LINK} && \
+    cd libcap-ng && \
+    ln -s README.md README && \
+    ./autogen.sh && \
+    ./configure --enable-static --disable-shared && \
+    make -j 6 && \
+    make install && \
+    cd .. && \
+    rm -rf libcap-ng
+
+# Build libnl
+RUN git clone --depth 1 --branch libnl3_7_0 ${LIBNL_LINK} && \
+    cd libnl && \
+    ./autogen.sh && \
+    ./configure --enable-static --disable-shared && \
+    make -j 6 && \
+    make install && \
+    cd .. && \
+    rm -rf libnl
+
+# Build lzo
+RUN wget --no-check-certificate ${LZO_LINK} && \
+    tar -xvf lzo-2.10.tar.gz && \
+    cd lzo-2.10 && \
+    chmod +x ./configure && \
+    ./configure && \
+    make -j 6 && \
+    make install && \
+    cd .. && \
+    rm -rf lzo-2.10 lzo-2.10.tar.gz
+
+# Stage 3: Final image
+FROM base
+COPY --from=prepare /tmp/cmake-3.28.0-rc5-linux-x86_64/ /usr/
+COPY --from=prepare /usr/local/ /usr/local/
+
+# Set PKG_CONFIG_PATH for lzo and other libraries
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+
+WORKDIR /tls/openvpn

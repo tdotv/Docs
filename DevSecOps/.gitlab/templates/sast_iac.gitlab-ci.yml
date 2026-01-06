@@ -1,0 +1,12 @@
+include:
+  - template: Security/SAST-IaC.latest.gitlab-ci.yml
+
+kics-iac-sast:
+  variables:
+    FILE_REPORT: gl-sast-report.json
+    NAME_OF_CI_SCRIPT: "sast_iac"
+  tags:
+    - docker
+  allow_failure: false
+  # script:
+  #   - !reference [.analyzer_run, script]

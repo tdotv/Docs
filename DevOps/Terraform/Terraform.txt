@@ -1,0 +1,8 @@
+https://github.com/vmware/terraform-provider-vsphere
+https://github.com/vmware/terraform-provider-vsphere/blob/main/docs/install.md
+
+https://developer.hashicorp.com/terraform/tutorials/virtual-machine/vsphere-provider
+https://knowledge.broadcom.com/external/article/315313/installing-vmware-tools-in-an-ubuntu-vir.html
+
+https://cloud.solit.by/s/kYDSosG86sfFY92 - terraform-provider-vsphere_2.15.0_linux_amd64.zip
+https://cloud.solit.by/s/FoJr49DJW7WqWeC - terraform_1.13.1_linux_amd64.zip

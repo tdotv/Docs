@@ -1,0 +1,106 @@
+services:
+  svod-front:
+    image: gitlab.solit.by:5050/svod/svod-front-bucket:main
+    ports:
+      - "11001:80"
+    environment:
+      - API_SVOD_URL=http://svod-back:8001
+    depends_on:
+      - svod-back
+    volumes:
+      - /etc/ssl/dev/certs/svod.crt:/etc/ssl/certs/svod.crt
+      - /etc/ssl/dev/private/svod.key:/etc/ssl/private/svod.key
+
+    # ======= TRAEFIK =======
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.svod.rule=Host(`svod.soft.solit.by`)"
+      - "traefik.http.routers.svod.entrypoints=websecure"
+      - "traefik.http.routers.svod.tls=true"
+
+      # - "traefik.http.services.svod.loadbalancer.server.port=443"
+      # - "traefik.http.services.svod.loadbalancer.server.scheme=https"
+
+      # - "traefik.http.routers.svod.service=svod-service"
+      # - "traefik.http.services.svod-service.loadbalancer.server.port=80"
+
+      # - "traefik.http.serversTransports.insecureTransport.insecureSkipVerify=true"
+      # - "traefik.http.services.svod-service.loadBalancer.serversTransport=insecureTransport"
+    restart: always
+
+  svod-back:
+    image: gitlab.solit.by:5050/svod/svod-back:dev
+    ports:
+      - "11002:8001"
+    environment:
+      - PROJECT_NAME=svod
+      - PROJECT_DIR=/svod/src
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app
+      - DB_HOST=svod-db
+      - DB_PORT=5432
+      - ALLOWED_HOSTS=localhost,192.168.100.64,svod
+      - MINIO_USER=access-key
+      - MINIO_PASSWORD=secret-key
+      - MINIO_BUCKET_NAME=app
+      - MINIO_ENDPOINT=http://svod-minio:9000
+    command: sh -c "python manage.py migrate &&
+      python manage.py datapp &&
+      python manage.py runserver 0.0.0.0:8001 --noreload"
+    depends_on:
+      svod-db:
+        condition: service_healthy
+    restart: always
+
+  svod-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "11003:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+    volumes:
+      - svod_db_postgres:/var/lib/postgresql/data
+
+  svod-minio:
+    image: minio/minio
+    ports:
+      - 19000:9000
+      - 19001:9001
+    environment:
+      - MINIO_ACCESS_KEY=access-key
+      - MINIO_SECRET_KEY=secret-key
+    volumes:
+      - svod_minio_data:/data
+    command: server /data --console-address ":9001"
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - svod-minio
+    entrypoint: >
+      /bin/sh -c "
+      apk add nc &&
+      while ! nc -z minio 9000; do echo 'Wait minio to startup...' && sleep 0.1; done; sleep 5 &&
+      /usr/bin/mc config host add udp http://svod-minio:9000 access-key secret-key;
+      /usr/bin/mc mb udp/app;
+      /usr/bin/mc policy download udp/app;
+      exit 0;"
+
+volumes:
+  media:
+  svod_db_postgres:
+  svod_minio_data:
+
+networks:
+  default:
+    name: proxynet

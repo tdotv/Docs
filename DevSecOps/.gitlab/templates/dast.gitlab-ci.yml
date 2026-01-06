@@ -1,0 +1,31 @@
+# DAST (Dynamic Application Security Testing) — это метод тестирования безопасности приложений.
+# Он используется для выявления уязвимостей в веб-приложениях и сервисах в режиме реального времени.
+# Проверяет в рабочем состоянии front
+
+dast_custom:
+  stage: dast_custom
+  image: registry.gitlab.com/gitlab-org/security-products/dast
+  variables:
+    # включение полного сканирования (пассивное и активное) - по умолчанию пассивное (не изменяет ни запросы, ни ответы - безопасно)
+    # DAST_FULL_SCAN_ENABLED: "true"
+    DAST_SKIP_TARGET_CHECK: true
+    DAST_AUTH_URL: "http://192.168.100.64:9001/"
+    DAST_USERNAME: "ittas"
+    DAST_PASSWORD: "ittas"
+    DAST_USERNAME_FIELD: "id:login-input"
+    DAST_PASSWORD_FIELD: "id:password-input"
+    DAST_AUTH_VERIFICATION_SELECTOR: "id:menu_item_Мониторинг кадров"
+  tags:
+    - docker
+  allow_failure: true
+  artifacts:
+    when: always
+    paths: [report.html]
+  script:
+    - mkdir -p /zap/wrk/
+    # указать APP_LINK !
+    - /analyze -t $APP_LINK -r report.html
+    - ls /zap/wrk/
+    - ls .
+    - find / -name report.html -print || echo "File not found"
+    - cp /zap/wrk/report.html .

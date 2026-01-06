@@ -1,0 +1,22 @@
+stages:
+  - build
+  - test
+  - dast_custom
+  - dast_api_custom
+
+.analyzer_run:
+  script:
+    - apk add jq bash coreutils
+    - /analyzer run
+    - bash .gitlab/.ci-scripts/$NAME_OF_CI_SCRIPT.sh
+
+include:
+  - local: "DevSecOps/.gitlab/templates/secret_detection.gitlab-ci.yml"
+  - local: "DevSecOps/.gitlab/templates/sast-semgrep.gitlab-ci.yml"
+  - local: "DevSecOps/.gitlab/templates/dast.gitlab-ci.yml"
+  - local: "DevSecOps/.gitlab/templates/kics-iac-sast.gitlab-ci.yml"
+  # - local: 'DevSecOps/.gitlab/templates/dependency_scanning.gitlab-ci.yml'
+  # - local: 'DevSecOps/.gitlab/templates/sast_iac.gitlab-ci.yml'
+  # - local: 'DevSecOps/.gitlab/templates/container_scanning.gitlab-ci.yml'
+  # - local: 'DevSecOps/.gitlab/templates/dast_api.gitlab-ci.yml'
+  # - local: 'DevSecOps/.gitlab/templates/sast.gitlab-ci.yml'

@@ -130,19 +130,47 @@ sort -n numbers.txt > numbers.txt		: will create new file numbers.txt with no da
 grep -E [A-Za-z].txt mydatafile.doc		: using reg expr should get -E : search using regular expressions
 
 tar cjf myBZIP2.bz2 Folder1			: best compress and archive on linux
-----------------------------------------------------------------------
-						SQL Server
 
-sqlcmd -No -S 127.0.0.1 -U sa		: connect without certification
-systemctl status mssql-server		: check status of sql server
-sudo systemctl stop mssql-server	: stop sql server
 ----------------------------------------------------------------------
 
+===== ext4 =====
 
+growpart /dev/sda 2
+sudo resize2fs /dev/sda2
 
+===== LVM =====
 
+sudo fdisk /dev/sdb
+---> : n
+---> : p
+---> : t - 8e
+---> : w
 
+sudo partprobe
+sudo pvcreate /dev/sdb12
+sudo vgdisplay
+sudo vgextend ubuntu-vg /dev/sdb12
+sudo lvdisplay
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+df -T
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+df -h
 
+***
+echo 1 > /sys/class/block/sda/device/rescan
+parted /dev/sdb print
 
+-> fix
 
+parted /dev/sdb
+resizepart N 100%   * N - номер раздела
+quit
 
+partprobe
+pvresize /dev/sdbN
+lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+resize2fs /dev/ubuntu-vg/ubuntu-lv   # если ext4
+
+df -h
+
+----------------------------------------------------------------------

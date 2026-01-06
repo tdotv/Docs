@@ -1,0 +1,158 @@
+stages:
+  - compile
+  - release
+
+.compile_template:
+  stage: compile
+  script:
+    - cmake -DARCH=$CMAKE_ARCH -P build.cmake || { echo "CMake failed"; cat /builds/cry/openbssl/build_errors.log; exit 1; }
+    - echo "Searching for artifacts..."
+    - find /builds/cry/openbssl -name "*.so.3" -o -name "include" -o -name "*.dll" -o -name "*.a" -o -name "*.dylib" || true
+  cache:
+    key: cache-$CMAKE_OS-$CMAKE_ARCH
+    paths:
+      - build/
+    policy: pull-push
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: always
+  tags:
+    - docker
+
+compile_mips:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:mips-general
+  variables:
+    CMAKE_ARCH: MIPS
+    CMAKE_OS: mips
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/*.so.3
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/libssl.a
+    expire_in: 1 week
+    when: always
+
+compile_windowsx32:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:windows32-general
+  variables:
+    CMAKE_ARCH: WIN32
+    CMAKE_OS: win32
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/libcrypto-3.dll
+      - /builds/cry/openbssl/libssl-3.dll
+      - /builds/cry/openbssl/libssl.a
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/*.dll.a
+    expire_in: 1 week
+    when: always
+
+compile_windowsx64:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:windows64-general
+  variables:
+    CMAKE_ARCH: WIN64
+    CMAKE_OS: win64
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/libcrypto-3-x64.dll
+      - /builds/cry/openbssl/libssl-3-x64.dll
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/libssl.a
+      - /builds/cry/openbssl/*.dll.a
+    expire_in: 1 week
+    when: always
+
+compile_darwin:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:darwin-general
+  variables:
+    CMAKE_ARCH: MACOS_X86
+    CMAKE_OS: darwin
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/*.dylib
+    expire_in: 1 week
+    when: always
+
+compile_arm:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:arm-general
+  variables:
+    CMAKE_ARCH: ARM
+    CMAKE_OS: arm
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/*.so.3
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/libssl.a
+    expire_in: 1 week
+    when: always
+
+compile_centos7:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:centos7-general
+  variables:
+    CMAKE_ARCH: LINUX_X86
+    CMAKE_OS: centos7
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/*.so.3
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/libssl.a
+    expire_in: 1 week
+    when: always
+
+compile_debian8:
+  extends: .compile_template
+  image: gitlab.solit.by:5050/utils/self_test:debian8-general
+  variables:
+    CMAKE_ARCH: LINUX_X86
+    CMAKE_OS: debian8
+  artifacts:
+    paths:
+      - /builds/cry/openbssl/include
+      - /builds/cry/openbssl/*.so.3
+      - /builds/cry/openbssl/libcrypto.a
+      - /builds/cry/openbssl/libssl.a
+    expire_in: 1 week
+    when: always
+
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  dependencies:
+    - compile_mips
+    - compile_windowsx32
+    - compile_windowsx64
+    - compile_darwin
+    - compile_arm
+    - compile_centos7
+    - compile_debian8
+  script:
+    - echo "Creating release with ZIP artifacts"
+    - |
+      release-cli create \
+        --name "Release $CI_COMMIT_TAG" \
+        --description "Automated release for $CI_COMMIT_TAG" \
+        --tag-name "$CI_COMMIT_TAG" \
+        --assets-link "{\"name\":\"MIPS\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_mips\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"WindowsX32\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_windowsx32\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"WindowsX64\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_windowsx64\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"Darwin\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_darwin\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"Arm\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_arm\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"CentOS7\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_centos7\",\"link_type\":\"other\"}" \
+        --assets-link "{\"name\":\"Debian8\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_TAG}/download?job=compile_debian8\",\"link_type\":\"other\"}"
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: always
+  tags:
+    - docker

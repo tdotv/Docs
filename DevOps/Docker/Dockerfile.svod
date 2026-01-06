@@ -1,0 +1,16 @@
+FROM python:3.14-slim
+EXPOSE 8001
+WORKDIR /usr/src/
+RUN apt update && apt install curl g++ python3-dev -y && \
+    mkdir /opt/java && \
+    curl https://download.java.net/java/GA/jdk22.0.1/c7ec1332f7bb44aeba2eb341ae18aca4/8/GPL/openjdk-22.0.1_linux-x64_bin.tar.gz | tar -xz -C /opt/java/
+#ENV PATH="/home/app/.local/bin:${PATH}"
+ENV PATH=$PATH:/opt/java/jdk-22.0.1/bin
+ENV JAVA_HOME=/opt/java/jdk-22.0.1
+COPY requirements.txt .
+RUN pip install gunicorn --no-cache-dir --disable-pip-version-check \
+    && pip install -r requirements.txt --no-cache-dir --disable-pip-version-check 
+#COPY --chown=app:app ./svod .
+COPY ./svod .
+CMD ["gunicorn", "--bind", ":8001", "--workers", "3", "svod.asgi:application"]
+

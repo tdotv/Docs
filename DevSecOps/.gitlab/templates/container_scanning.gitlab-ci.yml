@@ -1,0 +1,30 @@
+include:
+  - template: Security/Container-Scanning.gitlab-ci.yml
+
+# generalallowlist:
+#  CVE-2023-23914: curl
+#  CVE-2023-27536: curl
+#  CVE-2023-42916: curl
+#  CVE-2023-43551: curl
+#  CVE-2023-27533: curl
+#  CVE-2023-27534: curl
+#  CVE-2023-27535: curl
+
+container_scanning:
+  stage: test
+  variables:
+    CS_SEVERITY_THRESHOLD: "High"
+    GIT_STRATEGY: "fetch"
+    CS_IMAGE: "gitlab.solit.by:5050/svod/svod-front-bucket:release"
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  script:
+    - sudo apt-get update
+    - sudo apt-get -y install jq
+    - gtcs scan
+    - exit $(cat gl-container-scanning-report.json | jq --raw-output '.vulnerabilities | length')
+  needs:
+    - job: build_images
+      artifacts: true

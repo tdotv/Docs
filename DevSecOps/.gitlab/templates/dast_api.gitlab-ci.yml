@@ -1,0 +1,14 @@
+dast_api_custom:
+  stage: dast_api_custom
+  image: ghcr.io/zaproxy/zaproxy
+  tags:
+    - docker
+  artifacts:
+    when: always
+    paths: [report.html]
+  script:
+    - mkdir /zap/wrk/
+    - cp examples/dast_api/openapi.json /zap/wrk/openapi.json
+    # указать документацию в виде файла или URL !
+    - zap-api-scan.py -t openapi.json -f openapi -r report.html -I -d
+    - cp /zap/wrk/report.html .

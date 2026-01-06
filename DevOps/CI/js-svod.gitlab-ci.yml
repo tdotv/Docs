@@ -1,0 +1,142 @@
+stages:
+  - install_deps
+  # - test
+  - build
+  - versioning
+  - release
+
+variables:
+  IMAGE_NAME: "${CI_REGISTRY_IMAGE}"
+  IMAGE_TAG: "${CI_COMMIT_REF_NAME}"
+
+  GIT_SUBMODULE_STRATEGY: recursive
+
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "fast"
+  CACHE_COMPRESSION_LEVEL: "fast"
+
+workflow:
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - if: $CI_COMMIT_REF_NAME == "main"
+
+.git-auth: &git-auth
+  - git config --global user.name "CI Pipeline"
+  - git config --global user.email "cipipeline@solit.by"
+  - git remote set-url --push origin "https://${COMMIT_USER}:${SVOD_COMMIT_TOKEN}@gitlab.solit.by/$CI_PROJECT_PATH.git"
+
+# Caches
+.node_modules-cache: &node_modules-cache
+  key:
+    files:
+      - yarn.lock
+  paths:
+    - node_modules
+  policy: pull
+
+.yarn-cache: &yarn-cache
+  key: yarn-$CI_JOB_IMAGE
+  paths:
+    - .yarn
+
+.test-cache: &test-cache
+  key: test-$CI_JOB_IMAGE
+  paths:
+    - node_modules/.vitest
+  policy: pull-push
+
+.build-cache: &build-cache
+  key: build-$CI_JOB_IMAGE
+  paths:
+    - .cache
+    - public
+  policy: pull-push
+
+# Jobs
+install-deps:
+  stage: install_deps
+  image: node:18-alpine
+  interruptible: true
+  script:
+    - yarn install --cache-folder .yarn --frozen-lockfile --no-progress
+  cache:
+    - <<: *node_modules-cache
+      policy: pull-push
+    - <<: *yarn-cache
+
+# test:
+#   stage: test
+#   image: node:18-alpine
+#   interruptible: true
+#   cache:
+#     - <<: *node_modules-cache
+#     - <<: *test-cache
+#   script:
+#     # нужно добавить в package.json { "scripts": "test": "vitest run --coverage" }
+#     - yarn test
+#   needs: ["install-deps"]
+#   rules:
+#     - if: "$CI_MERGE_REQUEST_IID"
+
+build:
+  stage: build
+  image: node:18-alpine
+  interruptible: false
+  cache:
+    - <<: *node_modules-cache
+    - <<: *build-cache
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - build
+    expire_in: 1 week
+  needs: ["install-deps"]
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+build_images:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor --cache --cache-repo $CI_REGISTRY_IMAGE/cache --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:$IMAGE_TAG
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - /kaniko/.cache
+    policy: pull-push
+  needs:
+    - job: build
+      artifacts: true
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+versioning:increment:
+  stage: versioning
+  image: ubuntu:jammy
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - when: never
+  before_script:
+    - apt update && apt install jq moreutils git -y
+    - *git-auth
+  script:
+    - echo "Current version:$(jq -r '.version' package.json)"
+    - version_old=$(jq -r ".version" package.json)
+    - version=$(echo "$version_old" | awk -F . -v OFS='.' '{$NF += 1; print}')
+    - jq --arg VERSION "$version" '.version = $VERSION' package.json | sponge package.json
+    - |
+      if [ -n "$(git status --porcelain)" ]; then
+        git add package.json
+        git commit -m "AUTO version increase"
+        git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
+        echo "Version updated to $version and pushed."
+      else
+        echo "No version changes to commit."
+      fi

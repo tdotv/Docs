@@ -1,0 +1,16 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+.sast-analyzer:
+  extends: sast
+  allow_failure: false
+  script:
+    - !reference [.analyzer_run, script]
+
+sast:
+  variables:
+    # SAST_EXCLUDED_ANALYZERS: "bandit,gosec,flawfinder" # можно исключать различные инструменты
+    FILE_REPORT: gl-sast-report.json
+    NAME_OF_CI_SCRIPT: "sast"
+  tags:
+    - docker

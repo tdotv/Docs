@@ -1,0 +1,96 @@
+stages:
+  - versioning
+  - build
+  - container_scanning
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
+  IMAGE_NAME: "${CI_REGISTRY_IMAGE}"
+  IMAGE_TAG: "${CI_COMMIT_REF_NAME}"
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+    - if: '$CI_COMMIT_REF_NAME == "demo"'
+
+versioning:increment:
+  image: ubuntu:jammy
+  stage: versioning
+  before_script:
+    - apt update && apt install gawk -y
+  script:
+    - gawk -i inplace -F . -v OFS='.' '{$NF += 1; print}' svod/svod/version.txt
+  artifacts:
+    when: on_success
+    paths:
+      - svod/svod/version.txt
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+versioning:commit:
+  image: bitnamilegacy/git
+  stage: versioning
+  only:
+    - dev
+  dependencies:
+    - versioning:increment
+  needs:
+    - job: versioning:increment
+      artifacts: true
+  script:
+    - git config user.name "CI Pipeline"
+    - git config user.email "cipipeline@example.com"
+    - cat svod/svod/version.txt
+    - git add svod/svod/version.txt
+    - git commit -m "AUTO version increase"
+    - git remote set-url --push origin "https://$COMMIT_USER:$SVOD_COMMIT_TOKEN@gitlab.solit.by/$CI_PROJECT_PATH.git"
+    - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  # needs: ["versioning:commit"]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor --cache --cache-repo $CI_REGISTRY_IMAGE/cache --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:$IMAGE_TAG
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - /kaniko/.cache
+    policy: pull-push
+
+include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+# generalallowlist:
+#  CVE-2023-23914: curl
+#  CVE-2023-27536: curl
+#  CVE-2023-42916: curl
+#  CVE-2023-43551: curl
+#  CVE-2023-27533: curl
+#  CVE-2023-27534: curl
+#  CVE-2023-27535: curl
+
+container_scanning:
+  stage: container_scanning
+  variables:
+    CS_SEVERITY_THRESHOLD: "Medium"
+    GIT_STRATEGY: "fetch"
+    CS_IMAGE: "$IMAGE_NAME:$IMAGE_TAG"
+    SECURE_LOG_LEVEL: "debug"
+  script:
+    - sudo apt-get update
+    - sudo apt-get -y install jq
+    - gtcs scan
+    - exit $(cat gl-container-scanning-report.json | jq --raw-output '.vulnerabilities | length')
+  needs:
+    - job: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
