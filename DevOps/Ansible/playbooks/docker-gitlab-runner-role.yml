@@ -1,0 +1,33 @@
+---
+# Docker must be installed in advance - https://docs.docker.com/engine/install/
+- name: Gitlab runner installation
+  hosts: none
+  become: true
+
+  vars:
+    gitlab_runner_data_volume: /data/gitlab-runner
+    gitlab_runner_image: public.ecr.aws/gitlab/gitlab-runner:alpine3.19-v18.1.3
+    gitlab_runner_name:
+    gitlab_runner_gitlab_url:
+    gitlab_runner_auth_token:
+    gitlab_runner_default_image: public.ecr.aws/docker/library/alpine:3.22
+    gitlab_runner_concurrent: 3
+    gitlab_runner_limit: 0
+    gitlab_runner_request_concurrency: 3
+    gitlab_runner_metrics_listen_address: ":9252"
+
+  tasks:
+    - name: Call gitlab-runner role with vars
+      include_role:
+        name: ../roles/gitlab-runner-docker
+      vars:
+        data_volume: "{{gitlab_runner_data_volume}}"
+        image: "{{gitlab_runner_image}}"
+        runner_name: "{{ansible_hostname}}"
+        gitlab_url: "{{gitlab_runner_gitlab_url}}"
+        runner_auth_token: "{{gitlab_runner_auth_token}}"
+        default_image: "{{gitlab_runner_default_image}}"
+        concurrent: "{{gitlab_runner_concurrent}}"
+        limit: "{{gitlab_runner_limit}}"
+        request_concurrency: "{{gitlab_runner_request_concurrency}}"
+        metrics_listen_address: "{{gitlab_runner_metrics_listen_address}}"

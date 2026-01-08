@@ -1,0 +1,21 @@
+[Unit]
+Description=cadvisor
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker rm cadvisor
+ExecStart=/usr/bin/docker run \
+  --rm \
+  --publish=9005:8080 \
+  --volume=/:/rootfs:ro \
+  --volume=/var/run:/var/run:rw \
+  --volume=/sys:/sys:ro \
+  --volume=/var/lib/docker/:/var/lib/docker:ro \
+  --name=cadvisor \
+  gcr.io/cadvisor/cadvisor:latest -housekeeping_interval="30s" -docker_only="true" -disable_metrics="percpu,sched,tcp,udp,referenced_memory"
+ExecStop=/usr/bin/docker stop -t 10 cadvisor
+
+[Install]
+WantedBy=multi-user.target

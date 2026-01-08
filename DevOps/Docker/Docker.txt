@@ -48,7 +48,7 @@ docker exec -it DB-mysql /bin/bash
 > env							| Показывает системные переменные
 > mysql -p						| Вход в MySQL при помощи этой системной переменной
 
-docker exec -it DB-mysql mysql -u root -p		| То же самое :)
+docker exec -it DB-mysql mysql -u root -p		| То же самое
 
 -------------------- Постоянные данные: Docker Volumes --------------------
 

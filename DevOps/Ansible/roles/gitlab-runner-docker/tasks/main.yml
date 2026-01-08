@@ -1,0 +1,97 @@
+---
+
+- name: Check required var runner_auth_token is set
+  fail:
+    msg: "{{ item.key }} is not defined"
+  when: not item.value
+  with_items:
+  - { key: "runner_auth_token",              value: "{{ runner_auth_token | mandatory }}" }
+
+# - name: pip install docker
+#   pip:
+#     name: docker
+#     state: present
+
+- name: Init vars
+  set_fact:
+    command_base: "run --user=gitlab-runner --working-directory=/home/gitlab-runner"
+    metrics_listen_port: "{{ metrics_listen_address | regex_replace('.*:') }}"
+    
+- name: Init vars
+  set_fact:  
+    command: "{{ (metrics_listen_address | length > 0) | ternary(command_base + ' --listen-address ' + metrics_listen_address, command_base) }}"
+    published_ports: "{{ (metrics_listen_address | length > 0)  | ternary([metrics_listen_port + ':' + metrics_listen_port], []) }}"
+
+- name: Run GitLab CI runner container
+  docker_container:
+    name: gitlab-ci-runner
+    image: "{{ image }}"
+    state: started
+    recreate: yes
+    restart: yes
+    detach: yes
+    restart_policy: always
+    command: "{{ command }}"
+    published_ports: "{{ published_ports }}"
+    volumes:
+      - "{{data_volume}}:/etc/gitlab-runner"
+      - /var/run/docker.sock:/var/run/docker.sock
+    log_driver: json-file
+    log_options:
+      max-size: "10m"
+      max-file: "3"
+
+- name: Unregister any existing runner
+  shell: docker exec -t gitlab-ci-runner gitlab-runner unregister --all-runners
+  register: output
+
+- name: Display output
+  debug: msg={{ output.stdout_lines }}
+
+- name: Register the runner with GitLab
+  shell: >
+    docker exec --tty
+    gitlab-ci-runner
+    gitlab-runner register
+    --non-interactive
+    --url={{ gitlab_url }}
+    --token={{ runner_auth_token }}
+    --executor=docker
+    --docker-image={{ default_image }}
+    --name={{ runner_name }}
+    --limit={{ limit }}
+    --request-concurrency={{ request_concurrency }}
+    --docker-privileged
+    --docker-disable-cache=false
+    --docker-volumes=/var/run/docker.sock:/var/run/docker.sock
+
+- name: Set concurrency parameter in gitlab-runner's config.toml
+  lineinfile:
+    path: "{{data_volume}}/config.toml"
+    regexp: "^concurrent ="
+    line: "concurrent = {{ concurrent }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Ensure pull_policy is set to if-not-present
+  lineinfile:
+    path: "{{data_volume}}/config.toml"
+    regexp: '^\s*pull_policy\s*='
+    line: '    pull_policy = ["if-not-present"]'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart GitLab CI runner container
+  docker_container:
+    name: gitlab-ci-runner
+    state: started
+    restart: yes
+
+- name: List registered runners
+  shell: docker exec -t gitlab-ci-runner gitlab-runner list
+  register: output
+
+- name: Display output
+  debug: msg={{ output.stdout_lines }}

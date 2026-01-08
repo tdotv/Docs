@@ -1,0 +1,22 @@
+postgresql_options:
+  - { name: listen_addresses,  value: "localhost" }
+  - { name: logging_collector, value: "off" }
+
+postgresql_databases: [db1, db2]
+
+postgresql_users:
+  - { db: db1, name: user, password: "{{ vault_postgresql_user_password }}" }
+  - { db: db2, name: foobar,  password: "{{ vault_postgresql_foobar_password }}"  }
+
+postgresql_schemas:
+  - { db: db1, name: user, owner: user }
+  - { db: db2, name: foobar,  owner: foobar  }
+
+postgresql_privs:
+  - { db: db1, roles: user, privs: ALL, type: database }
+  - { db: db2, roles: foobar,  privs: ALL, type: database }
+
+postgresql_hba_entries:
+  - { contype: local, databases: all, users: all,                        method: peer          }
+  - { contype: host,  databases: db1, users: user,  address: samenet, method: scram-sha-256 }
+  - { contype: host,  databases: db2, users: foobar,   address: samenet, method: scram-sha-256 }

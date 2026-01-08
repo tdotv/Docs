@@ -1,0 +1,52 @@
+---
+- name: Install Apache and Upload my website
+  hosts: none
+  become: true
+
+  vars:
+    source_dir: ../myWebsite
+    destin_dir: /var/www/html
+
+  tasks:
+    - block: # ===== RedHat =====
+        - name: Install Apache Webserver for RedHat
+          yum: name=httpd state=latest
+        - name: Start Webserver service for RedHat
+          service: name=httpd state=Started enabled=yes
+      when: ansible_os_family == "RedHat"
+
+    - block: # ===== Debian =====
+        - name: Install Apache Webserver for Debian
+          apt: name=apache2 state=latest
+        - name: Start Webserver service for Debian
+          service: name=apache2 state=Started enabled=yes
+      when: ansible_os_family == "Debian"
+
+  # - name: Generate index.html file
+  #   template: src={{ source_dir }}/index.j2 dest={{ destin_dir }}/index.html mode=0555
+  #   notify:
+  #     - Restart Apache RedHat
+  #     - Restart Apache Debian
+
+  # - name: Copy HomePage to Web Server
+  #   copy: src={{ item }} dest={{ destin_dir }} mode=0555
+  #   with_fileglob: "{{ source_dir }}/image*"
+
+  #   copy: src={{ source_dir }}/{{ item }} dest={{ destin_dir }} mode=0555
+  #   loop:
+  #     - "index.html"
+  #     - "image1.png"
+  #     - "image2.png"
+
+  #   notify:
+  #     - Restart Apache RedHat
+  #     - Restart Apache Debian
+
+  handlers:
+    - name: Restart Apache RedHat
+      service: name=httpd state=restarted
+      when: ansible_os_family == "RedHat"
+
+    - name: Restart Apache Debian
+      service: name=apache2 state=restarted
+      when: ansible_os_family == "Debian"

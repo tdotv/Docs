@@ -6,3 +6,5 @@ https://knowledge.broadcom.com/external/article/315313/installing-vmware-tools-i
 
 https://cloud.solit.by/s/kYDSosG86sfFY92 - terraform-provider-vsphere_2.15.0_linux_amd64.zip
 https://cloud.solit.by/s/FoJr49DJW7WqWeC - terraform_1.13.1_linux_amd64.zip
+
+

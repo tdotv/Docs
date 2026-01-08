@@ -31,14 +31,9 @@ confirm_action() {
 #   ================== Archives ==================
 
 load_archives() {
-    if confirm_action "Do you want to download archives from cloud.solit.by?"; then
+    if confirm_action "Do you want to download archives from ...?"; then
         FILE_URLS=(
-            "https://mirror.solit.by/docnode/api.tar"
-            "https://cloud.solit.by/s/5WgjoEtA49HaKDJ/download/converter.zip"
-            "https://mirror.solit.by/docnode/front.tar"
-            "https://cloud.solit.by/s/EYrCBj5jZx5Kjot/download/pg_hbelt.so"
-            "https://mirror.solit.by/docnode/sign.tar"
-            "https://mirror.solit.by/docnode/verapd.tar"
+            # <links>
         )
 
         SYMBOL_DOWNLOAD=">"
@@ -64,7 +59,7 @@ load_archives() {
                 rm -f "$FILE_PATH"
             fi
 
-            log $YELLOW " $SYMBOL_DOWNLOAD Downloading $FILE_NAME from cloud.solit.by..."
+            log $YELLOW " $SYMBOL_DOWNLOAD Downloading $FILE_NAME from ..."
 
             wget --no-check-certificate -q -P "$ARCHIVE_DIR" "$FILE_URL" &
             WGET_PID=$!

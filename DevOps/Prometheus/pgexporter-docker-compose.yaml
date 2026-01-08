@@ -1,0 +1,40 @@
+  # Format
+  #DATA_SOURCE_NAME=postgresql://username:password@localhost:5432/postgres?sslmode=disable
+
+  # Monitor all databases via postgres_exporter
+  # DATA_SOURCE_NAME="postgresql://postgres:strongpostgrespassword@localhost:5432/?sslmode=disable"
+
+  # Monitor specific databases on the PostgreSQL server
+  # DATA_SOURCE_NAME="postgresql://username:password@localhost:5432/database-name?sslmode=disable"
+  
+  postgres-exporter-new:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    ports:
+      - '9187:9187'
+    environment:
+      DATA_SOURCE_NAME: "postgresql://$DATA_SOURCE_USER:$DATA_SOURCE_PASS@db:5432/uoas?sslmode=disable"
+      # PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      # PG_EXPORTER_INCLUDE_DATABASES: "uoas"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  postgres-exporter-old:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    ports:
+      - '9187:9187'
+    environment:
+      DATA_SOURCE_NAME: "postgresql://$DATA_SOURCE_USER:$DATA_SOURCE_PASS@db:5432/uoas?sslmode=disable"
+      # PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      # PG_EXPORTER_INCLUDE_DATABASES: "uoas"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring

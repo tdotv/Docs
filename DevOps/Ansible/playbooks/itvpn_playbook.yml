@@ -1,0 +1,128 @@
+---
+- name: Install itVPN Server
+  hosts: none
+  become: true
+
+  vars:
+    debian_archive_url: "https://cloud.solit.by/s/7FGHQ68QPw8J5G9/download/itVPNsrv_x86_Debian64.tar.gz"
+    archive_dest: /tmp/itVPNsrv_x86_Debian64.tar.gz
+    root_path: /etc/itvpn
+
+  tasks:
+    - name: Ping Servers
+      ansible.builtin.ping:
+
+    - name: Debian Block
+      when: ansible_os_family == "Debian"
+      block:
+        - name: Create Directory
+          ansible.builtin.file:
+            path: "{{ root_path }}"
+            state: directory
+            mode: "0755"
+
+        - name: Enable IP forwarding (sysctl)
+          ansible.posix.sysctl:
+            name: net.ipv4.conf.all.forwarding
+            value: "1"
+            state: present
+            reload: true
+
+        - name: Check value net.ipv4.conf.all.forwarding
+          ansible.builtin.command: sysctl net.ipv4.conf.all.forwarding
+          register: forwarding_check
+          changed_when: forwarding_check.rc != 0
+
+        - name: Results of sysctl
+          ansible.builtin.debug:
+            msg: "{{ forwarding_check.stdout }}"
+
+        - name: Set net.ipv4.conf.all.forwarding=1 in /etc/sysctl.conf
+          ansible.builtin.lineinfile:
+            path: /etc/sysctl.conf
+            regexp: '^net\.ipv4\.conf\.all\.forwarding'
+            line: "net.ipv4.conf.all.forwarding=1"
+            state: present
+            create: true
+            mode: "0600"
+
+        - name: Download itVPN Server archive on host
+          ansible.builtin.get_url:
+            url: "{{ debian_archive_url }}"
+            dest: "{{ archive_dest }}"
+            mode: "0644"
+
+        - name: Unarchive
+          ansible.builtin.unarchive:
+            src: "{{ archive_dest }}"
+            dest: "{{ root_path }}"
+            remote_src: true
+            extra_opts: ["--strip-components=1", "--show-stored-names"]
+
+        - name: Remove archive
+          ansible.builtin.file:
+            path: "{{ archive_dest }}"
+            state: absent
+
+        - name: Make ldd itVPN
+          ansible.builtin.command: ldd {{ root_path }}/itvpn
+          register: ldd_result
+          changed_when: ldd_result.rc != 0
+          ignore_errors: true
+
+        - name: Get ldd Output
+          ansible.builtin.debug:
+            var: ldd_result.stdout_lines
+
+        - name: Set chmod on files
+          ansible.builtin.file:
+            path: "{{ item }}"
+            mode: "0540"
+          loop:
+            - "{{ root_path }}/itvpn"
+            - "{{ root_path }}/license_app"
+
+        - name: Check python3
+          ansible.builtin.command: python3 --version
+          register: python_check
+          changed_when: python_check.rc != 0
+          ignore_errors: true
+
+        - name: Version Python
+          ansible.builtin.set_fact:
+            python_version: "{{ python_check.stdout | regex_search('[0-9]+\\.[0-9]+\\.[0-9]+') }}"
+          when: python_check.rc == 0
+
+        - name: Python >= 3.0
+          ansible.builtin.debug:
+            msg: "Python >= 3.0 is installed: {{ python_version }}"
+          when: python_version is version('3.0', '>=')
+
+        # - name: Download python3 и pip
+        #   ansible.builtin.package:
+        #     name:
+        #       - python3
+        #       - python3-pip
+        #     state: present
+
+        - name: License request file generation
+          ansible.builtin.command: "./license_app -g --uid-file {{ ansible_hostname }}.uid"
+          args:
+            chdir: "{{ root_path }}"
+          register: license_result
+          changed_when: license_result.rc != 0
+
+        - name: Check file existence
+          ansible.builtin.stat:
+            path: "{{ root_path }}/{{ ansible_hostname }}.uid"
+          register: file_stat
+          changed_when: file_stat.rc != 0
+
+        - name: File debug message
+          ansible.builtin.debug:
+            msg: "File is found: {{ file_stat.stat.exists }}"
+
+      rescue:
+        - name: Handle failure
+          ansible.builtin.debug:
+            msg: "Something went wrong"

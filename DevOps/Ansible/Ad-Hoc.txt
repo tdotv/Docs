@@ -1,0 +1,55 @@
+ansible all -m ping                 | сделать ping на все хосты - выполняется в месте ansible.cfg
+ansible all -m setup
+ansible all -i hosts -m ping
+ansible all -i hosts -m setup
+
+# Лучше не использовать shell и command, а проверить аналоги от ansible
+ansible all -i hosts -m shell -a "uptime"
+ansible all -i hosts -m command -a "uptime"
+
+ansible-inventory --list
+ansible-inventory --graph
+
+# debug
+ansible all -m shell -a "ls /var" -vvv
+
+# Apache установка
+ansible all -m yum -a "name=httpd state=latest" -b
+ansible all -m service -a "name=httpd state=started enabled=yes" -b
+
+# curl
+ansible all -m uri -a "url=... return_content=yes"
+
+# Скачивание c url
+ansible all -i hosts -m get_url -a "url=... dest=/home" -b
+
+# Скачивание пакета
+ansible all -m yum -a "name=stress state=installed" -b
+
+# Удаление пакета
+ansible all -m yum -a "name=stress state=removed" -b
+
+# Создать файл
+ansible all -i hosts -m file -a "path=/root/ansible-file.txt state=touch" -b
+
+# Копирование файла
+ansible test -i hosts -m copy -a "src=test_file dest=/home mode=777" -b
+
+# Удаление файла
+ansible all -i hosts -m file -a "path=/root/ansible-file.txt state=absent" -b
+
+# для выполнения от имени sudo (либо передать доп параметр, либо добавить пользователя в visudo)
+ansible ALL=(ALL:ALL) NOPASSWD:ALL
+
+ansible all -i /etc/ansible/hosts -m debug -a "var=dev"
+
+useradd -m -s /bin/bash ansible       | чтобы выполнять авторизацию по ssh, требуется sshpass
+passwd ansible
+
+cp id_rsa.pub from ansible machine to authorized_keys on client machine
+mv id_rsa client03
+
+ansible-galaxy init first_setup
+
+===============================================================================================
+

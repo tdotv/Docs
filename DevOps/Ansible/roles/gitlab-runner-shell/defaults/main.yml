@@ -1,0 +1,24 @@
+---
+# defaults file for gitlab-runner-shell
+amd64_binary_gitlab_runner: "https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/deb/gitlab-runner_amd64.deb"
+helper_image_gitlab_runner: "https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/deb/gitlab-runner-helper-images.deb"
+gitlab_url: "https://gitlab.solit.by"
+gitlab_token: "glrt-BRwMxVCrNvMCfeNGMHRY"
+runner_executor: "shell"
+runner_description: "{{ ansible_default_ipv4.address }} | {{ ansible_hostname }}"
+#
+# concurrent = 1
+# check_interval = 0
+# shutdown_timeout = 0
+
+# [session_server]
+#   session_timeout = 1800
+
+# [[runners]]
+#   name = "uoas"
+#   url = "https://gitlab.solit.by"
+#   id = 152
+#   token = "glrt-XL4S_RZBzXkGYB3aAeVi"
+#   token_obtained_at = 2025-03-25T06:59:50Z
+#   token_expires_at = 0001-01-01T00:00:00Z
+#   executor = "shell"

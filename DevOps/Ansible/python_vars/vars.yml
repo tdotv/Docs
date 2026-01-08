@@ -1,0 +1,21 @@
+# Desired Python version (major.minor). Use "3.10", "3.11", etc.
+python_version: "3.10"
+
+# Optional: full patch version for pyenv fallback (use the exact pyenv version string)
+# e.g. "3.10.6" or "3.10.12"
+python_full_version: "3.10.6"
+
+# Backports usage (set false if you don't want to touch repositories)
+use_backports: false
+
+# pyenv install user (only used if apt method fails)
+pyenv_user: "deploy"
+
+# # Application / virtualenv settings (optional)
+# app_owner: "myappuser"
+# app_root: "/opt/myapp"
+# app_venv: "/opt/myapp/venv"
+# app_requirements: "/opt/myapp/requirements.txt"
+
+# # playbook-local file to copy
+# app_requirements_src: "files/requirements.txt"

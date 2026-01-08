@@ -1,0 +1,84 @@
+---
+- name: Install itTLS Server
+  hosts: none
+  become: true
+
+  vars:
+    debian_archive_url: "https://cloud.solit.by/s/TYyF67YaRxCGrwo/download/itTLSsrv_x86_Debian64.tar.gz"
+    archive_dest: /tmp/itTLSsrv_x86_Debian64.tar.gz
+    root_path: /etc/ittlssrv
+    log_path: /var/log/ittlssrv
+    lib_path: /var/lib/ittlssrv
+
+  tasks:
+    - name: Ping Servers
+      ping:
+
+    - block: # ===== Debian =====
+        - name: Create Directory ---> /etc/ittlssrv
+          file:
+            path: "{{ root_path }}"
+            state: directory
+            mode: "0755"
+
+        - name: Download itTLS Server archive on host
+          get_url:
+            url: "{{ debian_archive_url }}"
+            dest: "{{ archive_dest }}"
+            mode: "0644"
+
+        - name: Unarchive
+          unarchive:
+            src: "{{ archive_dest }}"
+            dest: "{{ root_path }}"
+            remote_src: true
+            extra_opts: ["--strip-components=1", "--show-stored-names"]
+
+        - name: Remove archive
+          file:
+            path: "{{ archive_dest }}"
+            state: absent
+
+        - name: Set chmod on files
+          file:
+            path: "{{ item }}"
+            mode: "0777"
+          loop:
+            - "{{ root_path }}/ittlssrv"
+            - "{{ root_path }}/license_app"
+
+        - name: Create Directory ---> /var/lib && /var/log
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: "0755"
+          loop:
+            - "{{ lib_path }}"
+            - "{{ lib_path }}/body"
+            - "{{ log_path }}"
+
+        - name: Create Log File
+          file:
+            path: "{{ item }}"
+            state: touch
+            mode: "0777"
+          loop:
+            - "{{ log_path }}/access.log"
+            - "{{ log_path }}/cache.log"
+
+        - name: License request file generation
+          shell: "./license_app -g --uid-file {{ ansible_hostname }}.uid"
+          args:
+            chdir: "{{ root_path }}"
+          register: license_result
+
+        - name: Check file existence
+          stat:
+            path: "{{ root_path }}/{{ ansible_hostname }}.uid"
+          register: file_stat
+
+        - name: File debug message
+          debug:
+            msg: "File is found: {{ file_stat.stat.exists }}"
+
+      when: ansible_os_family == "Debian"

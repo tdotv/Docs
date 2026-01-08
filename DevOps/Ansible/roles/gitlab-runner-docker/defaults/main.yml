@@ -1,0 +1,30 @@
+---
+# path on docker host where to mount the image's /etc/gitlab-runner volume
+data_volume: /data/gitlab-runner
+
+# the name of the runner as displayed in gitlab server
+runner_name:
+
+# the URL of the CI server (GitLab)
+gitlab_url: https://gitlab.com/
+
+# registration token provided by the gitlab server
+registration_token: ""
+
+# the tag of the GitLab runner docker image to be run
+image: public.ecr.aws/gitlab/gitlab-runner:alpine3.19-v18.1.3
+
+# limits how many jobs globally can be run concurrently. The most upper limit of jobs using all defined runners. 0 does not mean unlimited
+concurrent: 10
+
+# limit how many jobs can be handled concurrently by this token. 0 simply means don't limit
+limit: 0
+
+# limit number of concurrent requests for new jobs from GitLab
+request_concurrency: 10
+
+# the default docker image to use when not specified in .gitlab-ci.yml
+default_image: public.ecr.aws/docker/library/alpine:3.22
+
+# expose Prometheus metrics on the listen address and the /metrics path. Setting an empty string or leaving default value will disable the /metrics endpoint. See https://docs.gitlab.com/runner/monitoring/
+metrics_listen_address: ""

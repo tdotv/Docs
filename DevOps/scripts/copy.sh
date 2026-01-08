@@ -2,7 +2,7 @@
 
 # Function to perform rsync
 perform_rsync_dry() {
-  rsync -e "ssh -p 1722" -r -i -c --delete --update \
+  rsync -e "ssh -p " -r -i -c --delete --update \
     --exclude 'files' \
     --exclude 'smd' \
     --exclude 'node_modules' \
@@ -10,11 +10,11 @@ perform_rsync_dry() {
     --exclude '.git' \
     --exclude 'public/vendor' \
     --exclude 'copy' \
-    --dry-run . jjnes@docnode.by:~/app
+    --dry-run . user@ip:~/app
 }
 
 perform_rsync() {
-  rsync -e "ssh -p 1722" -r -i -c --delete --update \
+  rsync -e "ssh -p " -r -i -c --delete --update \
     --exclude 'files' \
     --exclude 'smd' \
     --exclude 'node_modules' \
@@ -22,7 +22,7 @@ perform_rsync() {
     --exclude '.git' \
     --exclude 'public/vendor' \
     --exclude 'copy' \
-    . jjnes@docnode.by:~/app
+    . user@ip:~/app
 }
 
 # Perform a dry run to preview changes

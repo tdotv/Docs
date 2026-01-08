@@ -1,0 +1,7 @@
+---
+- name: Installation GitLab shell-runner
+  hosts: none
+  become: true
+
+  roles:
+    - { role: ../roles/gitlab-runner-shell, when: ansible_system == 'Linux' }

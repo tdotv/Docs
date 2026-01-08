@@ -1,0 +1,128 @@
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus:/etc/prometheus/
+      - prometheus:/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-admin-api
+      - --storage.tsdb.retention.time=14d
+      - --storage.tsdb.retention.size=10GB
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    environment:
+      TZ: "Europe/Minsk"
+    networks:
+      - default
+
+  # node-exporter:
+  #   image: prom/node-exporter
+  #   volumes:
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #     - /:/rootfs:ro
+  #   container_name: exporter
+  #   hostname: exporter
+  #   command:
+  #     - --path.procfs=/host/proc
+  #     - --path.sysfs=/host/sys
+  #     - --collector.filesystem.ignored-mount-points
+  #     - ^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)
+  #   ports:
+  #     - 9100:9100
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Minsk"
+  #   networks:
+  #     - default
+
+  grafana:
+    image: grafana/grafana:latest
+    user: root
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    environment:
+      TZ: "Europe/Minsk"
+    networks:
+      - default
+
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox
+    hostname: blackbox
+    ports:
+      - 9115:9115
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    command:
+      - "--config.file=/etc/blackbox/blackbox.yml"
+    volumes:
+      - ./blackbox:/etc/blackbox
+    environment:
+      TZ: "Europe/Minsk"
+    depends_on:
+      - prometheus
+    networks:
+      - default
+  
+  postgres-exporter-becloud:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter-becloud
+    ports:
+      - '9187:9187'
+    environment:
+      DATA_SOURCE_NAME: "postgresql://$DATA_SOURCE_USER:$DATA_SOURCE_PASS@192.168.12.5:5432/admin?sslmode=disable"
+    depends_on:
+      prometheus:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - default
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    user: root
+    volumes:
+      - ./alertmanager:/etc/alertmanager/
+    ports:
+      - 9093:9093
+    container_name: alertmanager
+    hostname: alertmanager
+    environment:
+      TZ: "Europe/Minsk"
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/etc/alertmanager/data'
+    networks:
+      - default
+
+volumes:
+  prometheus:
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

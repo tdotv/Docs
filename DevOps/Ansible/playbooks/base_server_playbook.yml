@@ -1,0 +1,157 @@
+---
+- name: Setup server with nginx and python
+  hosts: none
+  become: true
+
+  vars_files:
+    - ../python_vars/vars.yml
+
+  vars:
+    python_pkg: "python{{ python_version }}" # e.g. python3.10
+    python_venv_pkg: "python{{ python_version }}-venv" # e.g. python3.10-venv
+    python_dev_pkg: "python{{ python_version }}-dev" # e.g. python3.10-dev
+    python_bin: "/usr/bin/python{{ python_version }}" # expected system path
+    backports_release: "{{ ansible_distribution_release }}-backports"
+    base_packages:
+      - curl
+      - wget
+      - git
+      - tar
+      - zip
+      - htop
+      - lsof
+      - tree
+      - unzip
+      - gnupg
+      - dnsutils
+      - logrotate
+      - net-tools
+      - lsb-release
+      - iputils-ping
+      - build-essential
+      - ca-certificates
+      - apt-transport-https
+      - software-properties-common
+
+  tasks:
+    # ========== Base ==========
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name: "{{ base_packages }}"
+        state: present
+
+    # ========== Nginx ==========
+
+    - name: Check if port 80 is in use
+      shell: "ss -ltn | grep -q ':80 '"
+      ignore_errors: true
+      changed_when: false
+      register: port_check
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+      when: port_check.rc != 0
+      notify: Start and enable Nginx
+
+    # ========== Python ==========
+
+    - name: Optionally add backports repository
+      ansible.builtin.apt_repository:
+        repo: "deb http://deb.debian.org/debian {{ backports_release }} main"
+      when: use_backports | default(true)
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Try installing Python via APT (backports if enabled)
+      block:
+        - name: Install Python packages from APT
+          ansible.builtin.apt:
+            name:
+              - "{{ python_pkg }}"
+              - "{{ python_venv_pkg }}"
+              - "{{ python_dev_pkg }}"
+              - python3-pip
+            state: present
+            # only use backports for python packages if enabled
+            default_release: "{{ backports_release if use_backports | default(true) else omit }}"
+      rescue:
+        - name: APT install failed → fallback to pyenv (user-level)
+          block:
+            - name: Ensure pyenv build dependencies (system)
+              ansible.builtin.apt:
+                name:
+                  - build-essential
+                  - libssl-dev
+                  - zlib1g-dev
+                  - libbz2-dev
+                  - libreadline-dev
+                  - libsqlite3-dev
+                  - libffi-dev
+                  - libncursesw5-dev
+                  - curl
+                  - git
+                state: present
+
+            - name: Install pyenv for deploy user
+              ansible.builtin.shell: "curl -s https://pyenv.run | bash"
+              args:
+                creates: "/home/{{ pyenv_user }}/.pyenv/README.md"
+              become_user: "{{ pyenv_user }}"
+
+            - name: Ensure pyenv init lines present in user's shell
+              ansible.builtin.lineinfile:
+                path: "/home/{{ pyenv_user }}/.bashrc"
+                create: yes
+                owner: "{{ pyenv_user }}"
+                line: "{{ item }}"
+              loop:
+                - 'export PYENV_ROOT="$HOME/.pyenv"'
+                - 'export PATH="$PYENV_ROOT/bin:$PATH"'
+                - 'eval "$(pyenv init -)"'
+
+            - name: Install Python {{ python_full_version }} with pyenv
+              ansible.builtin.command: >
+                bash -lc 'export PYENV_ROOT="$HOME/.pyenv" && export PATH="$PYENV_ROOT/bin:$PATH" && pyenv install -s {{ python_full_version }}'
+              args:
+                creates: "/home/{{ pyenv_user }}/.pyenv/versions/{{ python_full_version }}"
+              become_user: "{{ pyenv_user }}"
+
+    # - name: Ensure application directory exists
+    #   ansible.builtin.file:
+    #     path: "{{ app_root }}"
+    #     state: directory
+    #     owner: "{{ app_owner | default('root') }}"
+    #     mode: '0755'
+
+    # - name: Ensure requirements file is present (example)
+    #   ansible.builtin.copy:
+    #     src: "{{ app_requirements_src | default('requirements.txt') }}"
+    #     dest: "{{ app_requirements }}"
+    #     owner: "{{ app_owner | default('root') }}"
+    #     mode: '0644'
+    #   when: app_requirements is defined
+
+    # - name: Create or update virtualenv and install requirements (idempotent)
+    #   ansible.builtin.pip:
+    #     requirements: "{{ app_requirements | default(omit) }}"
+    #     virtualenv: "{{ app_venv }}"
+    #     virtualenv_python: "{{ python_bin }}"
+    #   when: app_venv is defined
+
+  handlers:
+    - name: Start and enable Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes

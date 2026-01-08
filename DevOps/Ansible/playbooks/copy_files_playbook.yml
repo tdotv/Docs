@@ -1,0 +1,19 @@
+---
+- name: Deploy directory to remote Nginx Docker server
+  hosts: none
+  become: true
+
+  vars:
+    directory_content_to_copy:
+      - {
+          src: "/home/tdotv/myWorkDir/devops_docs/docnode/images",
+          dest: "/home/jjnes/registry",
+        }
+
+  tasks:
+    - name: Copy each directory to remote host
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "777"
+      loop: "{{ directory_content_to_copy }}"

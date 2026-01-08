@@ -1,0 +1,62 @@
+---
+# tasks file for gitlab-runner-shell
+- block:
+  - name: Installing gitlab-runner_amd64.deb
+    get_url:
+      url: "{{ amd64_binary_gitlab_runner }}"
+      dest: "/tmp/gitlab-runner_amd64.deb"
+      mode: "0644"
+
+  - name: Installing gitlab-runner-helper-images.deb
+    get_url:
+      url: "{{ helper_image_gitlab_runner }}"
+      dest: "/tmp/gitlab-runner-helper-images.deb"
+      mode: "0644"
+    
+  - name: Installing .deb packages
+    apt:
+      deb: "{{ item }}"
+      state: present
+    loop:
+      - /tmp/gitlab-runner-helper-images.deb
+      - /tmp/gitlab-runner_amd64.deb
+  
+  - name: Ensure gitlab_token is not empty
+    assert:
+      that:
+        - gitlab_token is defined
+        - gitlab_token | length > 0
+      fail_msg: "The gitlab_token variable is empty or undefined"
+    
+  - name: List GitLab Runners
+    command: gitlab-runner list
+    register: runner_list_output
+    changed_when: false
+    failed_when: false
+      
+  - name: Display GitLab Runner list output
+    debug:
+      msg: "{{ runner_list_output.stdout_lines }}"
+      
+  - name: Register GitLab Runner
+    command: >
+      gitlab-runner register
+      --non-interactive
+      --url {{ gitlab_url }}
+      --registration-token {{ gitlab_token }}
+      --executor {{ runner_executor }}
+      --description {{ runner_description }}
+      --run-untagged=false
+    register: register_runner
+    changed_when: "'Runner registered successfully' in register_runner.stdout"
+      
+  - name: Verify runner status
+    command: gitlab-runner verify
+    register: verify_runner
+    changed_when: false
+    retries: 5
+    delay: 5
+    until: "'OK' in verify_runner.stdout and runner_description in verify_runner.stdout"
+    failed_when: "'ERROR' in verify_runner.stdout"
+
+  when: ansible_os_family == "Debian"
